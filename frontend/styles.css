@@ -392,3 +392,228 @@ nav{
     background-color: #fac02f;
     margin-left: 527.5px;
 }
+.fourth_page{
+    width: 1660px;
+    height: 893px;
+    margin-bottom: 268px;
+    margin-left: 130px;
+    margin-right: 130px;
+}
+.fourth_page_topic{
+    width: 1660px;
+    height: 78px;
+    font-weight: 700;
+    font-size: 64px;
+    text-transform: uppercase;
+    text-align: center;
+}
+.fourth_page_topic1{
+    color: #fac02f;
+}
+.fourth_page_prices{
+    margin-top: 81.4px;
+    width: 1207px;
+    height: 733px;
+    margin-left: 225.5px;
+    display: flex;
+    gap: 41px;
+}
+.fourth_page_prices_box{
+    border: 1px solid #f4f0e5;
+    border-radius: 20px;
+    width: 375px;
+    height: 733px;
+}
+.fourth_page_prices_box_border{
+    width: 307px;
+    height: 585px;
+    margin: 53px 95.6px 39px 29px;
+}
+.fourth_page_prices_box_border_textbox{
+    width: 307px;
+    height: 194px;
+}
+.fourth_page_prices_box_border_textbox_texts{
+    width: 307px;
+    height: 51px;
+}
+.fourth_page_prices_box_border_textbox_texts_text1{
+    font-weight: 700;
+    font-size: 24px;
+    width: 307px;
+    height: 22.81px;
+    margin-bottom: 10px;
+}
+.fourth_page_prices_box_border_textbox_texts_text2{
+    font-weight: 400;
+    font-size: 16px;
+}
+.fourth_page_prices_box_border_textbox_cost{
+    font-weight: 500;
+    font-size: 21px;
+    width: 307px;
+    height: 111.21px;
+    margin-top: 31.36px;
+}
+.fourth_page_prices_box_border_textbox_cost1{
+    font-weight: 600;
+    font-size: 85px;
+}
+.fourth_page_prices_box_border_stroke{
+    width: 305px;
+    background-color: #f4f0e5;
+    margin: 66px 0px;
+}
+.fourth_page_prices_box_border_texts{
+    display: flex;
+    width: 307px;  
+    height: 54px;
+    gap: 26.88px;
+}
+.fourth_page_prices_box_border_texts_text{
+    font-weight: 400;
+    font-size: 16px;
+}
+.fourth_page_img{
+    width: 16.74px;
+    height: 16.74px;
+}
+.fourth_page_prices_box_top{
+    width: 307px;
+    height: 414px;
+    margin-left: 29px;
+    margin-top: 53px;
+}
+.fourth_page_prices_box_top_texts{
+    width: 307px;
+    height: 208px;
+    margin-bottom: 60px;
+}
+.fourth_page_prices_box_top_texts_topic{
+    width: 307px;
+    height: 66px;
+    margin-bottom: 31.36px;
+}
+.fourth_page_prices_box_top_texts_topic_main{
+    font-weight: 700;
+    font-size: 24px;
+    margin-bottom: 10px;
+    height: 29px;
+}
+.fourth_page_prices_box_top_texts_topic_bottom{
+    font-weight: 400;
+    font-size: 16px;
+    height: 27px;
+}
+.fourth_page_prices_box_top_texts_prices{
+    width: 307px;
+    height: 111.21px;
+    font-weight: 500;
+    font-size: 21px;
+}
+.fourth_page_prices_box_top_texts_prices1{
+    font-weight: 600;
+    font-size: 85px;
+}
+.fourth_page_prices_box_top_buttoms{
+    width: 307px;
+    height: 146px;
+}
+.fourth_page_prices_box_top_buttoms1{
+    border-radius: 10px;
+    width: 307px;
+    height: 67px;
+    background-color: #fac02f;
+    font-weight: 700;
+    font-size: 20px;
+    color:#121219;
+    margin-bottom: 20px;
+}
+.fourth_page_prices_box_top_link{
+    border: 1px solid #f4f0e5;
+    border-radius: 10px;
+    width: 232.5px;
+    height: 39.5px;
+    padding-top: 19.5px;
+    padding-left: 74.5px;
+}
+.fourth_page_link{
+    font-weight: 600;
+    font-size: 16px;
+    color: #f4f0e5;
+    margin-top: 19.5px;
+    text-decoration: none;
+}
+.fourth_page_prices_box_stroke{
+    width: 305px;
+    margin: 44px 44px 41px 29px;
+    background-color: #f4f0e5;
+}
+.fourth_page_prices_box_bottom{
+    width: 304px;
+    height: 125px;
+    margin-left: 29px;
+}
+.fourth_page_prices_box_bottom_texts{
+    width: 304px;
+    height: 54px;
+    display: flex;
+}
+.fourth_page_prices_box_bottom_texts_text{
+    width: 261.02px;
+    height: 54px;
+    font-weight: 400;
+    font-size: 16px;
+    margin-left: 26.88px;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 170%;
+}
+.fifth_page{
+    width: 1660px;
+    height: 609px;
+    margin-bottom: 180px;
+    margin-left: 130px;
+}
+.fifth_page_topic{
+    width: 1660px;
+    height: 78px;
+    font-weight: 700;
+    font-size: 64px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 130px;
+}
+.fifth_page_topic1{
+    color: #fac02f;
+}
+.fifth_page_questions{
+    width: 1660px;
+    height: 401px;
+    row-gap: 14px;
+    display: grid;
+}
+.fifth_page_question{
+    border: 1px solid rgba(244, 240, 229, 0.5);
+    border-radius: 10px;
+    width: 1660px;
+    height: 69px;
+    backdrop-filter: blur(30px);
+    background: rgba(255, 255, 255, 0.01);
+    display: flex;
+}
+.fifth_page_question_text{
+    height: 30px;
+    width: 600px;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 150%;
+    margin: 20px 19px 0px 20px;
+    /* border: 2px solid greenyellow; */
+    margin-right: 976px;
+}
+.fifth_page_question_img{
+    
+    height: 44px;
+    margin: 13px 12px 20px 0px;
+}
