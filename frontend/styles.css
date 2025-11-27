@@ -204,13 +204,13 @@ nav{
     height: 785px;
     margin-left: 130px;
     margin-bottom: 179px;
-    border: 2px solid greenyellow;
+    /* border: 2px solid greenyellow; */
 }
 .second_page_top{
     width: 1660px;
     height: 128px;
     margin-bottom: 130px;
-    border: 2px solid greenyellow;
+    /* border: 2px solid greenyellow; */
 }
 .second_page_top_text1{
     font-weight: 700;
@@ -235,7 +235,63 @@ nav{
 .second_page_bottom{
     width: 1660px;
     height: 527px;
-    border: 2px solid greenyellow;
+    /* border: 2px solid greenyellow; */
+    display: flex;
+    gap: 20px;
+}
+.second_page_box{
+    border: 1px solid #f4f0e5;
+    border-radius: 25px;
+    width: 398px;
+    height: 527px;
+}
+.second_page_box_logo{
+    border: 1px solid #f4f0e5;
+    border-radius: 15px;
+    width: 360px;
+    height: 52px;
+    margin: 25px 0px 20px 20px;
+    margin-bottom: 80px;
+    display: flex;
+    justify-content: space-between;
+    /* border: 2px solid greenyellow; */
+}
+.second_page_box_logo_img{
+    width: 32px;
+    height: 32px;
+    margin: 10px 10px 0px 15px;
+}
+.second_page_box_string_word{
+    font-weight: 700;
+    font-size: 20px;
+    color: #f4f0e5;
+    margin: 14px 14px 15px;
+}
+.second_page_box_info{
+    width: 360px;
+    height: 243px;
+    margin: 0px 20px;
+    /* border: 2px solid greenyellow; */
+}
+.second_page_box_number{
+    width: 360px;
+    height: 90px;
+    font-weight: 700;
+    font-size: 128px;
+    line-height: 68%;
+    letter-spacing: -0.07em;
+    color: #fac02f;
+    /* border: 2px solid greenyellow; */
+}
+.second_page_box_text{
+    margin-top: 50px;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 150%;
+}
+.second_page_box_text11{
+    font-weight: 700;
+    font-size: 24px;
 }
 .third_page{
     width: 1660px;
