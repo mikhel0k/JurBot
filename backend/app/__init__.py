@@ -1,4 +1,4 @@
-from api.router import router as api_router
+from .api.router import router as api_router
 from fastapi import APIRouter
 
 router = APIRouter()

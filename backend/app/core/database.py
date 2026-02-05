@@ -1,26 +1,24 @@
-from dotenv import load_dotenv
-import os
-
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-load_dotenv()
+from settings import settings
 
-ASYNC_DATABASE_URL = os.getenv(
-    "ASYNC_DATABASE_URL",
-    "postgresql+asyncpg://user:password@localhost:5432/fastapi_db"
+
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    future=True,
+    echo=False,
 )
 
-async_engine = create_async_engine(ASYNC_DATABASE_URL)
-
-AsyncSessionLocal = async_sessionmaker(
-    async_engine,
+session_factory = async_sessionmaker(
+    bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
-	autoflush=False,
+    autoflush=False,
 )
 
-async def get_db():
-    async with AsyncSessionLocal() as session:
+
+async def get_session():
+    async with session_factory() as session:
         try:
             yield session
         finally:
