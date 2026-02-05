@@ -4,13 +4,11 @@ env/
 ENV/
 .env
 
-# IDE
 .idea/
 *.iws
 *.iml
 *.ipr
 
-# JetBrains IDEs
 .DS_Store
 *.swp
 *.swo

@@ -1,0 +1,14 @@
+.venv/
+venv/
+env/
+ENV/
+.env
+
+.idea/
+*.iws
+*.iml
+*.ipr
+
+.DS_Store
+*.swp
+*.swo
