@@ -64,4 +64,4 @@ def send_code_email_gmail(to_email: str, code: str) -> None:
         server.starttls()
         server.login(settings.LOGIN_FOR_GMAIL, settings.PASSWORD_FOR_GMAIL)
         server.sendmail(settings.LOGIN_FOR_GMAIL, [to_email], msg.as_string())
-    logger.info("Code email sent to %s", to_email)
+    logger.info("Code email sent to %s", to_email) 
