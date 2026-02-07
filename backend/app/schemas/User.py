@@ -1,5 +1,5 @@
 from typing import Annotated
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from app.schemas.fields import (
     BaseContacts,
@@ -8,7 +8,7 @@ from app.schemas.fields import (
 )
 
 
-class UserBase(BaseModel, BaseContacts):
+class UserBase(BaseContacts):
     full_name: Annotated[
         str,
         Field(
@@ -32,7 +32,7 @@ class UserCreate(UserBase):
     ]
 
 
-class UserUpdate(BaseModel, BaseOptionalContacts):
+class UserUpdate(BaseOptionalContacts):
     full_name: Annotated[
         str | None,
         Field(

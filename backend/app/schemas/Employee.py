@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Annotated, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from app.schemas.fields import (
     BaseContacts,
@@ -11,7 +11,7 @@ from app.schemas.fields import (
 )
 
 
-class EmployeeBase(BaseModel, BaseContacts):
+class EmployeeBase(BaseContacts):
     first_name: Annotated[
         str,
         Field(..., max_length=150, description="Employee first name (given name)."),
@@ -90,7 +90,7 @@ class EmployeeCreate(EmployeeBase):
     company_id: Id
 
 
-class EmployeeUpdate(BaseModel, BaseOptionalContacts):
+class EmployeeUpdate(BaseOptionalContacts):
     first_name: Annotated[
         Optional[str],
         Field(None, max_length=150, description="New first name."),
