@@ -9,6 +9,21 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: backend
+      POSTGRES_DB: ci_db
+      POSTGRES_USER: ci_user
+      POSTGRES_PASSWORD: ci_pass
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB_TEST: ci_db_test
+      POSTGRES_USER_TEST: ci_user
+      POSTGRES_PASSWORD_TEST: ci_pass
+      POSTGRES_HOST_TEST: localhost
+      POSTGRES_PORT_TEST: "5432"
+      LOG_LEVEL: INFO
+      LOGIN_FOR_GMAIL: ci@example.com
+      PASSWORD_FOR_GMAIL: ci_dummy
 
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +39,4 @@ jobs:
           pip install -r backend/requirements.txt
 
       - name: Run tests
-        env:
-          PYTHONPATH: backend
         run: pytest backend/tests/ -v
