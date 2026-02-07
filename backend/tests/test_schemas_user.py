@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.User import UserCreate, UserResponse, UserUpdate
+from app.schemas.User import UserCreate, UserResponse, UserUpdate, Confirm, Login
 
 
 def _valid_user_create_payload():
@@ -183,3 +183,60 @@ class TestUserResponse:
         assert "password" not in js
         assert "1" in js
         assert "a@b.ru" in js
+
+
+class TestConfirm:
+    def test_valid(self):
+        obj = Confirm(jti="550e8400-e29b-41d4-a716-446655440000", code="123456")
+        assert obj.jti == "550e8400-e29b-41d4-a716-446655440000"
+        assert obj.code == "123456"
+
+    def test_jti_required(self):
+        with pytest.raises(ValidationError):
+            Confirm(code="123456")
+
+    def test_code_required(self):
+        with pytest.raises(ValidationError):
+            Confirm(jti="some-uuid")
+
+    def test_empty_strings_accepted(self):
+        obj = Confirm(jti="", code="")
+        assert obj.jti == ""
+        assert obj.code == ""
+
+    def test_model_dump_roundtrip(self):
+        obj = Confirm(jti="abc", code="999")
+        d = obj.model_dump()
+        obj2 = Confirm.model_validate(d)
+        assert obj2.jti == obj.jti
+        assert obj2.code == obj.code
+
+
+class TestLogin:
+    def test_valid(self):
+        obj = Login(email="user@example.com", password="secret123")
+        assert obj.email == "user@example.com"
+        assert obj.password == "secret123"
+
+    def test_email_required(self):
+        with pytest.raises(ValidationError):
+            Login(password="secret")
+
+    def test_password_required(self):
+        with pytest.raises(ValidationError):
+            Login(email="a@b.ru")
+
+    def test_invalid_email_rejected(self):
+        with pytest.raises(ValidationError):
+            Login(email="not-email", password="x")
+
+    def test_password_min_length_1_valid(self):
+        obj = Login(email="a@b.ru", password="1")
+        assert obj.password == "1"
+
+    def test_model_dump_roundtrip(self):
+        obj = Login(email="a@b.ru", password="pwd")
+        d = obj.model_dump()
+        obj2 = Login.model_validate(d)
+        assert obj2.email == obj.email
+        assert obj2.password == obj.password
