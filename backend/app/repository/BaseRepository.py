@@ -31,6 +31,6 @@ class BaseRepository:
         await session.refresh(data)
         return data
     
-    async def delete(self, session: AsyncSession, id: int) -> None:
-        await session.delete(await self.get_by_id(session, id))
+    async def delete(self, session: AsyncSession, data: ModelT) -> None:
+        await session.delete(data)
         await session.flush()
