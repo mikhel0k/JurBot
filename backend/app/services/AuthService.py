@@ -1,9 +1,9 @@
 import json
 from fastapi import HTTPException, status
-from app.schemas import UserCreate, UserResponse
+from app.schemas import Confirm, UserCreate, UserResponse, Login
 from app.repository import UserRepository
 from app.models.User import User
-from app.core import get_password_hash, create_token
+from app.core import get_password_hash, create_token, verify_password
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 from uuid import uuid4
@@ -29,12 +29,14 @@ async def register(session: AsyncSession, redis: Redis, user: UserCreate):
     await redis.set(f"{reg_id}_{code}", json.dumps(user_data), ex=60*15)
     return reg_id
 
-async def confirm_registration(session: AsyncSession, redis: Redis, reg_id: uuid4, code: str):
-    data = await redis.get(f"{reg_id}_{code}")
-    if data is None:
+
+async def confirm_registration(session: AsyncSession, redis: Redis, data: Confirm):
+    jti, code = data.jti, data.code
+    payload = await redis.get(f"{jti}_{code}")
+    if payload is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid code")
-    user_data = json.loads(data)
-    await redis.delete(f"{reg_id}_{code}")
+    user_data = json.loads(payload)
+    await redis.delete(f"{jti}_{code}")
     await redis.delete(user_data["email"])
     await redis.delete(user_data["phone_number"])
     user_instance = User(**user_data)
@@ -50,4 +52,37 @@ async def confirm_registration(session: AsyncSession, redis: Redis, reg_id: uuid
     refresh_token = create_token(data_for_refresh_token)
     await session.commit()
     return access_token, refresh_token
-    
+
+
+async def login(session: AsyncSession, redis: Redis, data: Login):
+    user_in_db = await UserRepository().get_by_email(session, data.email)
+    if user_in_db is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+    if not verify_password(data.password, user_in_db.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+    user_data = UserResponse.model_validate(user_in_db).model_dump()
+    code = ""
+    reg_id = uuid4()
+    for _ in range(6):
+        code += str(randint(0, 9))
+    send_code_email_gmail(user_data["email"], code)
+    await redis.set(f"{reg_id}_{code}", json.dumps(user_data), ex=60*15)
+    return reg_id
+
+
+async def confirm_login(session: AsyncSession, redis: Redis, data: Confirm):
+    jti, code = data.jti, data.code
+    payload = await redis.get(f"{jti}_{code}")
+    if payload is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid code")
+    user_data = json.loads(payload)
+    await redis.delete(f"{jti}_{code}")
+    data_for_token = {
+        "sub": user_data["id"],
+    }
+    data_for_refresh_token = {
+        "sub": user_data["id"],
+    }
+    access_token = create_token(data_for_token)
+    refresh_token = create_token(data_for_refresh_token)
+    return access_token, refresh_token

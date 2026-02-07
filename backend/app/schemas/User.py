@@ -52,7 +52,7 @@ class UserResponse(UserBase):
     model_config = {"from_attributes": True}
 
 
-class Confirm_Registration(BaseModel):
+class Confirm(BaseModel):
     jti: str
     code: str
 
