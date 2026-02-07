@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Response
-from app.core import get_session, get_redis
-from app.schemas import UserCreate, Confirm, Login
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 from fastapi import Depends
 
 from app.services import AuthService
+from app.core import get_session, get_redis
+from app.schemas import UserCreate, Confirm, Login
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])

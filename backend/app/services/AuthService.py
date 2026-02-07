@@ -1,14 +1,15 @@
 import json
 from fastapi import HTTPException, status
-from app.schemas import Confirm, UserCreate, UserResponse, Login
-from app.repository import UserRepository
-from app.models.User import User
-from app.core import get_password_hash, create_token, verify_password
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 from uuid import uuid4
 from random import randint
+
 from app.core import send_code_email_gmail
+from app.schemas import Confirm, UserCreate, UserResponse, Login
+from app.repository import UserRepository
+from app.models.User import User
+from app.core import get_password_hash, create_token, verify_password
 
 
 async def register(session: AsyncSession, redis: Redis, user: UserCreate):
@@ -85,4 +86,5 @@ async def confirm_login(session: AsyncSession, redis: Redis, data: Confirm):
     }
     access_token = create_token(data_for_token)
     refresh_token = create_token(data_for_refresh_token)
+    await redis.set(f"{user_data['id']}_refresh_token", refresh_token, ex=60*60*24*30)
     return access_token, refresh_token
