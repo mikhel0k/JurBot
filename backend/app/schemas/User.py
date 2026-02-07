@@ -1,10 +1,12 @@
 from typing import Annotated
 from pydantic import Field
+from pydantic import BaseModel
 
 from app.schemas.fields import (
     BaseContacts,
     BaseOptionalContacts,
     Id,
+    Email,
 )
 
 
@@ -48,3 +50,13 @@ class UserResponse(UserBase):
     id: Id
 
     model_config = {"from_attributes": True}
+
+
+class Confirm_Registration(BaseModel):
+    jti: str
+    code: str
+
+
+class Login(BaseModel):
+    email: Email
+    password: str

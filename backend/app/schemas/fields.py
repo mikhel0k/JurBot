@@ -61,9 +61,8 @@ class BaseOptionalContacts(BaseModel):
 
 
 __all__ = [
-    "EMAIL_MAX_LENGTH",
-    "PHONE_NUMBER_MAX_LENGTH",
     "Id",
     "BaseContacts",
     "BaseOptionalContacts",
+    "Email",
 ]
