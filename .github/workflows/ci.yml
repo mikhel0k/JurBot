@@ -9,6 +9,30 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: ci_db
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_user -d ci_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       PYTHONPATH: backend
       POSTGRES_DB: ci_db
@@ -16,11 +40,13 @@ jobs:
       POSTGRES_PASSWORD: ci_pass
       POSTGRES_HOST: localhost
       POSTGRES_PORT: "5432"
-      POSTGRES_DB_TEST: ci_db_test
+      POSTGRES_DB_TEST: ci_db
       POSTGRES_USER_TEST: ci_user
       POSTGRES_PASSWORD_TEST: ci_pass
       POSTGRES_HOST_TEST: localhost
       POSTGRES_PORT_TEST: "5432"
+      REDIS_HOST: localhost
+      REDIS_PORT: "6379"
       LOG_LEVEL: INFO
       LOGIN_FOR_GMAIL: ci@example.com
       PASSWORD_FOR_GMAIL: ci_dummy
@@ -37,6 +63,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
+
+      - name: Generate JWT keys
+        run: |
+          mkdir -p backend/jwt_tokens
+          openssl genrsa -out backend/jwt_tokens/jwt-private.pem 2048
+          openssl rsa -in backend/jwt_tokens/jwt-private.pem -pubout -out backend/jwt_tokens/jwt-public.pem
 
       - name: Run tests
         run: pytest backend/tests/ -v
