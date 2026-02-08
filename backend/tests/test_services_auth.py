@@ -1,4 +1,3 @@
-"""Тесты для AuthService."""
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 

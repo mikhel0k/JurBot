@@ -14,3 +14,4 @@ class Company(Base):
     address: Mapped[str] = mapped_column(String(255), nullable=False)
 
     owner: Mapped['User'] = relationship('User', back_populates='companies')
+    employees: Mapped[list['Employee']] = relationship('Employee', back_populates='company')

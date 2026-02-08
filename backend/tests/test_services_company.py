@@ -1,4 +1,3 @@
-"""Тесты для CompanyService."""
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 

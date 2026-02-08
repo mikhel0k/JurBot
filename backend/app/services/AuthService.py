@@ -47,10 +47,10 @@ async def confirm_registration(session: AsyncSession, redis: Redis, data: Confir
     user_in_db = await UserRepository().create(session, user_instance)
     user = UserResponse.model_validate(user_in_db)
     data_for_token = {
-        "sub": user.id,
+        "sub": str(user.id),
     }
     data_for_refresh_token = {
-        "sub": user.id,
+        "sub": str(user.id),
     }
     access_token = create_token(data_for_token)
     refresh_token = create_token(data_for_refresh_token)
@@ -82,10 +82,10 @@ async def confirm_login(session: AsyncSession, redis: Redis, data: Confirm):
     user_data = json.loads(payload)
     await redis.delete(f"{jti}_{code}")
     data_for_token = {
-        "sub": user_data["id"],
+        "sub": str(user_data["id"]),
     }
     data_for_refresh_token = {
-        "sub": user_data["id"],
+        "sub": str(user_data["id"]),
     }
     access_token = create_token(data_for_token)
     refresh_token = create_token(data_for_refresh_token)
