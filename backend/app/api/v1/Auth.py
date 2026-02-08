@@ -2,6 +2,7 @@
 import jwt
 from fastapi import APIRouter, Depends, Request, Response
 
+from app.core.logging import get_logger
 from app.core.rate_limit import limiter
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +20,7 @@ from app.repository import CompanyRepository, UserRepository
 from app.schemas import Confirm, Login, UserCreate
 from app.services import AuthService
 
+logger = get_logger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -133,8 +135,10 @@ async def logout(
             user_id = payload.get("sub")
             if user_id:
                 await redis.delete(f"{user_id}_refresh_token")
-        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, Exception):
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
             pass
+        except Exception as e:
+            logger.warning("Logout: unexpected error invalidating refresh token: %s", e)
     clear_token(response, "access_token")
     clear_token(response, "refresh_token")
     return {"status": "logged out"}

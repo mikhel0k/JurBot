@@ -1,5 +1,6 @@
 """Конфигурация приложения. Единая точка импорта: from app.core.config import settings."""
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,27 +17,32 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str
     POSTGRES_PORT: int
 
-    POSTGRES_DB_TEST: str
-    POSTGRES_USER_TEST: str
-    POSTGRES_PASSWORD_TEST: str
-    POSTGRES_HOST_TEST: str
-    POSTGRES_PORT_TEST: int
+    # Тестовая БД: опционально; если не задано — используются те же значения, что и для основной (удобно для prod).
+    POSTGRES_DB_TEST: Optional[str] = None
+    POSTGRES_USER_TEST: Optional[str] = None
+    POSTGRES_PASSWORD_TEST: Optional[str] = None
+    POSTGRES_HOST_TEST: Optional[str] = None
+    POSTGRES_PORT_TEST: Optional[int] = None
 
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
 
-    LOG_LEVEL: str
+    LOG_LEVEL: str = "INFO"
 
     JWT_PRIVATE_KEY: Path = BASE_DIR / "jwt_tokens" / "jwt-private.pem"
     JWT_PUBLIC_KEY: Path = BASE_DIR / "jwt_tokens" / "jwt-public.pem"
     ALGORITHM: str = "RS256"
 
-    LOGIN_FOR_GMAIL: str
-    PASSWORD_FOR_GMAIL: str
+    # Gmail для кодов подтверждения: опционально (в dev/test можно не задавать — отправка будет пропущена).
+    LOGIN_FOR_GMAIL: str = ""
+    PASSWORD_FOR_GMAIL: str = ""
 
     SEND_LOGIN_CODE_EMAIL: bool = True
 
     ENVIRONMENT: str = "production"  # "development" — secure=False для cookies (localhost)
+
+    # CORS: разрешённые origins (через запятую). Пусто — только same-origin.
+    CORS_ORIGINS: str = ""
 
     @property
     def SECURE_COOKIES(self) -> bool:
@@ -53,15 +59,30 @@ class Settings(BaseSettings):
         return (f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
                 f"{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}")
 
+    def _test_db(self) -> str:
+        return self.POSTGRES_DB_TEST or self.POSTGRES_DB
+
+    def _test_user(self) -> str:
+        return self.POSTGRES_USER_TEST or self.POSTGRES_USER
+
+    def _test_password(self) -> str:
+        return self.POSTGRES_PASSWORD_TEST or self.POSTGRES_PASSWORD
+
+    def _test_host(self) -> str:
+        return self.POSTGRES_HOST_TEST or self.POSTGRES_HOST
+
+    def _test_port(self) -> int:
+        return self.POSTGRES_PORT_TEST if self.POSTGRES_PORT_TEST is not None else self.POSTGRES_PORT
+
     @property
     def TEST_DATABASE_URL(self) -> str:
-        return (f"postgresql+asyncpg://{self.POSTGRES_USER_TEST}:{self.POSTGRES_PASSWORD_TEST}@"
-                f"{self.POSTGRES_HOST_TEST}:{self.POSTGRES_PORT_TEST}/{self.POSTGRES_DB_TEST}")
+        return (f"postgresql+asyncpg://{self._test_user()}:{self._test_password()}@"
+                f"{self._test_host()}:{self._test_port()}/{self._test_db()}")
 
     @property
     def TEST_SYNC_DATABASE_URL(self) -> str:
-        return (f"postgresql://{self.POSTGRES_USER_TEST}:{self.POSTGRES_PASSWORD_TEST}@"
-                f"{self.POSTGRES_HOST_TEST}:{self.POSTGRES_PORT_TEST}/{self.POSTGRES_DB_TEST}")
+        return (f"postgresql://{self._test_user()}:{self._test_password()}@"
+                f"{self._test_host()}:{self._test_port()}/{self._test_db()}")
 
     model_config = SettingsConfigDict(from_attributes=True)
 

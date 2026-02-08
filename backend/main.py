@@ -2,16 +2,19 @@
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app import router
+from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.api.health import router as health_router
 from app.core.exceptions import AppException
 from app.core.logging import get_logger
 from app.core.redis import close_redis
+from app.core.security import _get_jwt_private_key, _get_jwt_public_key
 
 logger = get_logger(__name__)
 
@@ -37,6 +40,13 @@ Cookies устанавливаются автоматически при `regist
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Проверка JWT-ключей при старте — падаем сразу с понятной ошибкой, а не при первом запросе.
+    try:
+        _get_jwt_private_key()
+        _get_jwt_public_key()
+    except RuntimeError as e:
+        logger.error("JWT keys validation failed: %s", e)
+        raise
     yield
     await close_redis()
 
@@ -51,6 +61,17 @@ app = FastAPI(
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS: для фронта на другом origin задайте CORS_ORIGINS в .env (через запятую, например http://localhost:3000).
+_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(health_router)
 app.include_router(router)
 
