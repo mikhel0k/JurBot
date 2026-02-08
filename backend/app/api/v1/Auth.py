@@ -3,7 +3,8 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import get_redis, get_session
-from app.core.dependencies import get_user_repo, get_company_repo
+from app.core.dependencies import get_company_repo, get_user_repo
+from app.core.security import ACCESS_TOKEN_COOKIE_MAX_AGE, REFRESH_TOKEN_COOKIE_MAX_AGE, set_token
 from app.repository import CompanyRepository, UserRepository
 from app.schemas import Confirm, Login, UserCreate
 from app.services import AuthService
@@ -31,25 +32,9 @@ async def confirm_register(
     user_repo: UserRepository = Depends(get_user_repo),
 ):
     access_token, refresh_token = await AuthService.confirm_registration(session, redis, user_repo, data)
-    response.set_cookie(
-        "access_token",
-        access_token,
-        httponly=True,
-        secure=True,
-        max_age=60*30,
-        path="/",
-    )
-    response.set_cookie(
-        "refresh_token",
-        refresh_token,
-        httponly=True,
-        secure=True,
-        max_age=60*60*24*30,
-        path="/",
-    )
-    return {
-        "status": "success",
-    }
+    set_token(response, access_token, "access_token", ACCESS_TOKEN_COOKIE_MAX_AGE)
+    set_token(response, refresh_token, "refresh_token", REFRESH_TOKEN_COOKIE_MAX_AGE)
+    return {"status": "success"}
 
 
 @router.post("/login")
@@ -72,22 +57,6 @@ async def confirm_login(
     company_repo: CompanyRepository = Depends(get_company_repo),
 ):
     access_token, refresh_token, message = await AuthService.confirm_login(session, redis, company_repo, data)
-    response.set_cookie(
-        "access_token",
-        access_token,
-        httponly=True,
-        secure=True,
-        max_age=60*30,
-        path="/",
-    )
-    response.set_cookie(
-        "refresh_token",
-        refresh_token,
-        httponly=True,
-        secure=True,
-        max_age=60*60*24*30,
-        path="/",
-    )
-    return {
-        "status": message,
-    }
+    set_token(response, access_token, "access_token", ACCESS_TOKEN_COOKIE_MAX_AGE)
+    set_token(response, refresh_token, "refresh_token", REFRESH_TOKEN_COOKIE_MAX_AGE)
+    return {"status": message}

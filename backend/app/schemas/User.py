@@ -60,3 +60,11 @@ class Confirm(BaseModel):
 class Login(BaseModel):
     email: Email
     password: str
+
+
+class LoginCachePayload(BaseModel):
+    """Формат данных в Redis при подтверждении входа (ключ: {jti}_{code})."""
+    id: int
+    email: str
+    phone_number: str
+    full_name: str

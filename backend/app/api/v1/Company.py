@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import get_redis, get_session, get_user_id
 from app.core.dependencies import get_company_repo
+from app.core.security import REFRESH_TOKEN_COOKIE_MAX_AGE, set_token
 from app.repository import CompanyRepository
 from app.schemas import CompanyCreate, CompanyUpdate
 from app.services import CompanyService
@@ -22,7 +23,7 @@ async def create_company(
     company_repo: CompanyRepository = Depends(get_company_repo),
 ):
     result, access_token = await CompanyService.create_company(session, redis, company_repo, company, user_id)
-    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, max_age=60 * 60 * 24 * 30)
+    set_token(response, access_token, "access_token", REFRESH_TOKEN_COOKIE_MAX_AGE)
     return result
 
 

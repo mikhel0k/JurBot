@@ -4,7 +4,7 @@ import logging
 import bcrypt
 import jwt
 
-from settings import settings
+from app.core.config import settings
 from starlette.responses import Response
 
 import smtplib
@@ -43,14 +43,16 @@ def decode_token(token: str) -> dict:
     return jwt.decode(token, JWT_PUBLIC_KEY, algorithms=[settings.ALGORITHM,])
 
 
-def set_token(response: Response, token: str, key: str, max_age: int):
+def set_token(response: Response, token: str, key: str, max_age: int, path: str = "/") -> None:
+    """Выставляет cookie с токеном (httponly, secure, samesite=lax)."""
     response.set_cookie(
         key=key,
         value=token,
         httponly=True,
         samesite="lax",
         secure=True,
-        max_age=max_age
+        max_age=max_age,
+        path=path,
     )
 
 

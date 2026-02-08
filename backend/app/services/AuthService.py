@@ -3,7 +3,9 @@ import json
 from random import randint
 from uuid import uuid4
 
+import jwt
 from fastapi import HTTPException, status
+from pydantic import ValidationError
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,10 +16,10 @@ from app.core import (
     send_code_email_gmail,
     verify_password,
 )
-from app.core.security import REFRESH_TOKEN_DURATION_MIN
+from app.core.security import decode_token, REFRESH_TOKEN_DURATION_MIN
 from app.models.User import User
 from app.repository import CompanyRepository, UserRepository
-from app.schemas import CompanyResponse, Confirm, Login, UserCreate, UserResponse
+from app.schemas import CompanyResponse, Confirm, Login, LoginCachePayload, UserCreate, UserResponse
 
 logger = get_logger(__name__)
 
@@ -110,15 +112,19 @@ async def confirm_login(session: AsyncSession, redis: Redis, company_repo: Compa
         if payload is None:
             logger.warning("Invalid login code jti=%s", data.jti)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid code")
-        user_data = json.loads(payload)
+        try:
+            user_data = LoginCachePayload.model_validate(json.loads(payload))
+        except (json.JSONDecodeError, ValidationError) as e:
+            logger.warning("Invalid login cache payload jti=%s: %s", data.jti, e)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid code")
         await redis.delete(f"{data.jti}_{data.code}")
-        company_in_db = await company_repo.get_by_user_id(session, user_data["id"])
+        company_in_db = await company_repo.get_by_user_id(session, user_data.id)
         access_token = create_token({
-            "sub": str(user_data["id"]),
+            "sub": str(user_data.id),
             "company_id": company_in_db.id if company_in_db else None,
         })
-        refresh_token = create_token({"sub": str(user_data["id"])}, duration=REFRESH_TOKEN_DURATION_MIN)
-        await redis.set(f"{user_data['id']}_refresh_token", refresh_token, ex=60 * 60 * 24 * 30)
+        refresh_token = create_token({"sub": str(user_data.id)}, duration=REFRESH_TOKEN_DURATION_MIN)
+        await redis.set(f"{user_data.id}_refresh_token", refresh_token, ex=60 * 60 * 24 * 30)
         message = "you do not have a company yet"
         if company_in_db:
             await redis.set(
@@ -127,10 +133,31 @@ async def confirm_login(session: AsyncSession, redis: Redis, company_repo: Compa
                 ex=60 * 30,
             )
             message = "success"
-        logger.info("User logged in id=%s company_id=%s", user_data["id"], company_in_db.id if company_in_db else None)
+        logger.info("User logged in id=%s company_id=%s", user_data.id, company_in_db.id if company_in_db else None)
         return access_token, refresh_token, message
     except HTTPException:
         raise
     except Exception as e:
         logger.exception("Failed to confirm login: %s", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+
+
+async def refresh_access_token(
+    session: AsyncSession, company_repo: CompanyRepository, refresh_token: str
+) -> str:
+    """По валидному refresh-токену выдаёт новый access-токен. При невалидном/истёкшем — 401."""
+    try:
+        payload = decode_token(refresh_token)
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        logger.warning("Refresh failed: invalid or expired token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    try:
+        user_id = int(payload["sub"])
+    except (KeyError, ValueError, TypeError):
+        logger.warning("Refresh failed: invalid payload")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    company_in_db = await company_repo.get_by_user_id(session, user_id)
+    company_id = company_in_db.id if company_in_db else None
+    access_token = create_token({"sub": str(user_id), "company_id": company_id})
+    logger.info("Access token refreshed for user_id=%s", user_id)
+    return access_token

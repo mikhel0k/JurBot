@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,7 +47,7 @@ async def update_employee(
 
 @router.delete("/")
 async def dismiss_employees(
-    employee_ids: list[int],
+    employee_ids: list[int] = Body(..., description="Список id сотрудников для увольнения"),
     company_id: int = Depends(get_company_id),
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
