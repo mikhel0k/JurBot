@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 from uuid import uuid4
 from random import randint
+import asyncio
 
 from app.core import send_code_email_gmail
 from app.schemas import Confirm, UserCreate, UserResponse, Login
@@ -24,7 +25,7 @@ async def register(session: AsyncSession, redis: Redis, user: UserCreate):
     reg_id = uuid4()
     for _ in range(6):
         code += str(randint(0, 9))
-    send_code_email_gmail(user_data["email"], code)
+    await asyncio.to_thread(send_code_email_gmail, user_data["email"], code)
     await redis.set(user_data["email"], "registering", ex=60*15)
     await redis.set(user_data["phone_number"], "registering", ex=60*15)
     await redis.set(f"{reg_id}_{code}", json.dumps(user_data), ex=60*15)
@@ -66,7 +67,7 @@ async def login(session: AsyncSession, redis: Redis, data: Login):
     reg_id = uuid4()
     for _ in range(6):
         code += str(randint(0, 9))
-    send_code_email_gmail(user_data["email"], code)
+    await asyncio.to_thread(send_code_email_gmail, user_data["email"], code)
     await redis.set(f"{reg_id}_{code}", json.dumps(user_data), ex=60*15)
     return reg_id
 

@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.Base import Base
 
@@ -12,3 +12,5 @@ class Company(Base):
     inn: Mapped[str] = mapped_column(String(12), nullable=False)
     snils: Mapped[str] = mapped_column(String(11), nullable=False)
     address: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    owner: Mapped['User'] = relationship('User', back_populates='companies')
