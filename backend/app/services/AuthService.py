@@ -11,6 +11,8 @@ from app.schemas import Confirm, UserCreate, UserResponse, Login
 from app.repository import UserRepository
 from app.models.User import User
 from app.core import get_password_hash, create_token, verify_password
+from app.repository import CompanyRepository
+from app.schemas import CompanyResponse
 
 
 async def register(session: AsyncSession, redis: Redis, user: UserCreate):
@@ -88,4 +90,9 @@ async def confirm_login(session: AsyncSession, redis: Redis, data: Confirm):
     access_token = create_token(data_for_token)
     refresh_token = create_token(data_for_refresh_token)
     await redis.set(f"{user_data['id']}_refresh_token", refresh_token, ex=60*60*24*30)
-    return access_token, refresh_token
+    message = "you do not have a company yet"
+    company_in_db = await CompanyRepository().get_by_user_id(session, user_data["id"])
+    if company_in_db:
+        await redis.set(f"company_{company_in_db.owner_id}", json.dumps(CompanyResponse.model_validate(company_in_db).model_dump()), ex=60*30)
+        message = "success"
+    return access_token, refresh_token, message

@@ -71,7 +71,7 @@ async def confirm_login(
     session: AsyncSession=Depends(get_session),
     redis: Redis=Depends(get_redis)
 ):
-    access_token, refresh_token = await AuthService.confirm_login(session, redis, data)
+    access_token, refresh_token, message = await AuthService.confirm_login(session, redis, data)
     response.set_cookie(
         "access_token",
         access_token,
@@ -89,5 +89,5 @@ async def confirm_login(
         path="/",
     )
     return {
-        "status": "success",
+        "status": message,
     }
