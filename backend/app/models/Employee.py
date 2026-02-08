@@ -11,7 +11,7 @@ from app.models.Base import Base
 class Employee(Base):
     __tablename__ = 'employees'
 
-    company_id: Mapped[int] = mapped_column(Integer, ForeignKey('companies.id'), nullable=False)
+    company_id: Mapped[int] = mapped_column(Integer, ForeignKey('companies.id'), nullable=False, index=True)
     first_name: Mapped[str] = mapped_column(String(150), nullable=False)
     last_name: Mapped[str] = mapped_column(String(150), nullable=False)
     middle_name: Mapped[str] = mapped_column(String(150), nullable=False)
