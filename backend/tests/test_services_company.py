@@ -51,7 +51,7 @@ class TestCreateCompany:
         repo_cls.return_value.get_by_user_id = AsyncMock(return_value=None)
         created = _mock_company(owner_id=1, id=5)
         repo_cls.return_value.create = AsyncMock(return_value=created)
-        company, access_token = await create_company(session, redis, _company_create(), user_id=1)
+        company, access_token = await create_company(session, redis, repo_cls.return_value, _company_create(), 1)
         assert company is not None
         assert company.id == 5
         assert company.owner_id == 1
@@ -70,7 +70,7 @@ class TestCreateCompany:
         create_mock = AsyncMock()
         repo_cls.return_value.create = create_mock
         with pytest.raises(HTTPException) as exc_info:
-            await create_company(session, redis, _company_create(), user_id=1)
+            await create_company(session, redis, repo_cls.return_value, _company_create(), 1)
         assert exc_info.value.status_code == 400
         assert "already exists" in exc_info.value.detail.lower()
         assert create_mock.await_count == 0
@@ -84,7 +84,7 @@ class TestGetCompany:
         repo_cls.return_value.get_by_user_id = get_by_user_mock
         cached = {"id": 1, "owner_id": 1, "name": "ООО", "inn": "7707083893", "snils": "12345678901", "address": "Москва"}
         redis.get = AsyncMock(return_value=json.dumps(cached))
-        result = await get_company(session, redis, user_id=1)
+        result = await get_company(session, redis, repo_cls.return_value, 1)
         assert result is not None
         assert result.name == "ООО"
         assert result.owner_id == 1
@@ -96,7 +96,7 @@ class TestGetCompany:
         redis.get = AsyncMock(return_value=None)
         company = _mock_company()
         repo_cls.return_value.get_by_user_id = AsyncMock(return_value=company)
-        result = await get_company(session, redis, user_id=1)
+        result = await get_company(session, redis, repo_cls.return_value, 1)
         assert result is not None
         assert result.name == company.name
         redis.set.assert_awaited_once()
@@ -108,7 +108,7 @@ class TestGetCompany:
         redis.get = AsyncMock(return_value=None)
         repo_cls.return_value.get_by_user_id = AsyncMock(return_value=None)
         with pytest.raises(HTTPException) as exc_info:
-            await get_company(session, redis, user_id=999)
+            await get_company(session, redis, repo_cls.return_value, 999)
         assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower()
 
@@ -125,7 +125,7 @@ class TestUpdateCompany:
         repo_cls.return_value.update = AsyncMock(return_value=updated_company)
         redis.get = AsyncMock(return_value="cached_data")
         data = CompanyUpdate(name="Новое имя")
-        result = await update_company(session, redis, user_id=1, company_data=data)
+        result = await update_company(session, redis, repo_cls.return_value, 1, data)
         assert result is not None
         assert result.name == "Новое имя"
         redis.delete.assert_awaited_once()
@@ -141,7 +141,7 @@ class TestUpdateCompany:
         repo_cls.return_value.update = AsyncMock(return_value=updated_company)
         redis.get = AsyncMock(return_value=None)
         data = CompanyUpdate(address="Новый адрес")
-        result = await update_company(session, redis, user_id=1, company_data=data)
+        result = await update_company(session, redis, repo_cls.return_value, 1, data)
         assert result.address == "Новый адрес"
         repo_cls.return_value.update.assert_awaited_once()
 
@@ -153,7 +153,7 @@ class TestUpdateCompany:
         repo_cls.return_value.update = update_mock
         data = CompanyUpdate(name="Любое")
         with pytest.raises(HTTPException) as exc_info:
-            await update_company(session, redis, user_id=999, company_data=data)
+            await update_company(session, redis, repo_cls.return_value, 999, data)
         assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower()
         assert update_mock.await_count == 0
@@ -164,6 +164,6 @@ class TestUpdateCompany:
         redis.get = AsyncMock(return_value=None)
         repo_cls.return_value.get_by_user_id = AsyncMock(side_effect=RuntimeError("DB error"))
         with pytest.raises(HTTPException) as exc_info:
-            await get_company(session, redis, user_id=1)
+            await get_company(session, redis, repo_cls.return_value, 1)
         assert exc_info.value.status_code == 500
         assert "internal" in exc_info.value.detail.lower()

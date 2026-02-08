@@ -1,36 +1,36 @@
-from fastapi import APIRouter, Response
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, Response
 from redis.asyncio import Redis
-from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import get_redis, get_session
+from app.core.dependencies import get_user_repo, get_company_repo
+from app.repository import CompanyRepository, UserRepository
+from app.schemas import Confirm, Login, UserCreate
 from app.services import AuthService
-from app.core import get_session, get_redis
-from app.schemas import UserCreate, Confirm, Login
-
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register")
 async def register(
-    user: UserCreate, 
-    session: AsyncSession=Depends(get_session), 
-    redis: Redis=Depends(get_redis)
+    user: UserCreate,
+    session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
+    user_repo: UserRepository = Depends(get_user_repo),
 ):
-    jti = await AuthService.register(session, redis, user)
-    return {
-        "jti": jti,
-    }
+    jti = await AuthService.register(session, redis, user_repo, user)
+    return {"jti": jti}
 
 
 @router.post("/register/confirm")
 async def confirm_register(
     response: Response,
     data: Confirm,
-    session: AsyncSession=Depends(get_session),
-    redis: Redis=Depends(get_redis)
+    session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
+    user_repo: UserRepository = Depends(get_user_repo),
 ):
-    access_token, refresh_token = await AuthService.confirm_registration(session, redis, data)
+    access_token, refresh_token = await AuthService.confirm_registration(session, redis, user_repo, data)
     response.set_cookie(
         "access_token",
         access_token,
@@ -55,23 +55,23 @@ async def confirm_register(
 @router.post("/login")
 async def login(
     data: Login,
-    session: AsyncSession=Depends(get_session),
-    redis: Redis=Depends(get_redis)
+    session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
+    user_repo: UserRepository = Depends(get_user_repo),
 ):
-    jti = await AuthService.login(session, redis, data)
-    return {
-        "jti": jti,
-    }
+    jti = await AuthService.login(session, redis, user_repo, data)
+    return {"jti": jti}
 
 
 @router.post("/login/confirm")
 async def confirm_login(
     response: Response,
     data: Confirm,
-    session: AsyncSession=Depends(get_session),
-    redis: Redis=Depends(get_redis)
+    session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
+    company_repo: CompanyRepository = Depends(get_company_repo),
 ):
-    access_token, refresh_token, message = await AuthService.confirm_login(session, redis, data)
+    access_token, refresh_token, message = await AuthService.confirm_login(session, redis, company_repo, data)
     response.set_cookie(
         "access_token",
         access_token,

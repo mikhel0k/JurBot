@@ -22,13 +22,13 @@ from app.schemas import CompanyResponse, Confirm, Login, UserCreate, UserRespons
 logger = get_logger(__name__)
 
 
-async def register(session: AsyncSession, redis: Redis, user: UserCreate):
+async def register(session: AsyncSession, redis: Redis, user_repo: UserRepository, user: UserCreate):
     logger.info("Register attempt email=%s", user.email)
     try:
         if await redis.exists(user.email) or await redis.exists(user.phone_number):
             logger.warning("User already in redis email=%s", user.email)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists")
-        if await UserRepository().get_by_email(session, user.email) or await UserRepository().get_by_phone_number(
+        if await user_repo.get_by_email(session, user.email) or await user_repo.get_by_phone_number(
             session, user.phone_number
         ):
             logger.warning("User already in db email=%s", user.email)
@@ -51,7 +51,7 @@ async def register(session: AsyncSession, redis: Redis, user: UserCreate):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 
-async def confirm_registration(session: AsyncSession, redis: Redis, data: Confirm):
+async def confirm_registration(session: AsyncSession, redis: Redis, user_repo: UserRepository, data: Confirm):
     logger.debug("Confirm registration jti=%s", data.jti)
     try:
         payload = await redis.get(f"{data.jti}_{data.code}")
@@ -63,7 +63,7 @@ async def confirm_registration(session: AsyncSession, redis: Redis, data: Confir
         await redis.delete(user_data["email"])
         await redis.delete(user_data["phone_number"])
         user_instance = User(**user_data)
-        user_in_db = await UserRepository().create(session, user_instance)
+        user_in_db = await user_repo.create(session, user_instance)
         user = UserResponse.model_validate(user_in_db)
         access_token = create_token({"sub": str(user.id), "company_id": None})
         refresh_token = create_token({"sub": str(user.id)}, duration=REFRESH_TOKEN_DURATION_MIN)
@@ -71,16 +71,18 @@ async def confirm_registration(session: AsyncSession, redis: Redis, data: Confir
         logger.info("User registered id=%s", user.id)
         return access_token, refresh_token
     except HTTPException:
+        await session.rollback()
         raise
     except Exception as e:
+        await session.rollback()
         logger.exception("Failed to confirm registration: %s", e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 
-async def login(session: AsyncSession, redis: Redis, data: Login):
+async def login(session: AsyncSession, redis: Redis, user_repo: UserRepository, data: Login):
     logger.info("Login attempt email=%s", data.email)
     try:
-        user_in_db = await UserRepository().get_by_email(session, data.email)
+        user_in_db = await user_repo.get_by_email(session, data.email)
         if user_in_db is None:
             logger.warning("Login failed user not found email=%s", data.email)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
@@ -101,7 +103,7 @@ async def login(session: AsyncSession, redis: Redis, data: Login):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 
-async def confirm_login(session: AsyncSession, redis: Redis, data: Confirm):
+async def confirm_login(session: AsyncSession, redis: Redis, company_repo: CompanyRepository, data: Confirm):
     logger.debug("Confirm login jti=%s", data.jti)
     try:
         payload = await redis.get(f"{data.jti}_{data.code}")
@@ -110,7 +112,7 @@ async def confirm_login(session: AsyncSession, redis: Redis, data: Confirm):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid code")
         user_data = json.loads(payload)
         await redis.delete(f"{data.jti}_{data.code}")
-        company_in_db = await CompanyRepository().get_by_user_id(session, user_data["id"])
+        company_in_db = await company_repo.get_by_user_id(session, user_data["id"])
         access_token = create_token({
             "sub": str(user_data["id"]),
             "company_id": company_in_db.id if company_in_db else None,

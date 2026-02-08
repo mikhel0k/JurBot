@@ -40,13 +40,15 @@ class TestBaseContacts:
             BaseContacts(email=email, phone_number="+79991234567")
 
     def test_phone_at_max_length_valid(self):
-        phone = "+7" + "9" * (PHONE_NUMBER_MAX_LENGTH - 2)
-        assert len(phone) == PHONE_NUMBER_MAX_LENGTH
+        # Валидатор допускает только +7 и 10 цифр (всего 12 символов)
+        phone = "+7" + "9" * 10
+        assert len(phone) == 12
         obj = BaseContacts(email="a@b.ru", phone_number=phone)
         assert obj.phone_number == phone
 
     def test_phone_over_max_length_invalid(self):
-        phone = "+7" + "9" * (PHONE_NUMBER_MAX_LENGTH - 1)
+        # Больше 10 цифр после +7 не допускается
+        phone = "+7" + "9" * 11
         with pytest.raises(ValidationError):
             BaseContacts(email="a@b.ru", phone_number=phone)
 

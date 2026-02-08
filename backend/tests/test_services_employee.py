@@ -79,7 +79,7 @@ class TestCreateEmployee:
         mock_employee_cls.return_value = MagicMock()
         created = _mock_employee(employee_id=5, company_id=1)
         repo_cls.return_value.create = AsyncMock(return_value=created)
-        result = await create_employee(session, redis, _valid_employee_create(), company_id=1)
+        result = await create_employee(session, redis, repo_cls.return_value, _valid_employee_create(), 1)
         assert result is not None
         assert result.id == 5
         assert result.company_id == 1
@@ -94,7 +94,7 @@ class TestCreateEmployee:
     async def test_create_employee_repository_error_raises_500(self, repo_cls, session, redis):
         repo_cls.return_value.create = AsyncMock(side_effect=RuntimeError("DB error"))
         with pytest.raises(HTTPException) as exc_info:
-            await create_employee(session, redis, _valid_employee_create(), company_id=1)
+            await create_employee(session, redis, repo_cls.return_value, _valid_employee_create(), 1)
         assert exc_info.value.status_code == 500
         assert "internal" in exc_info.value.detail.lower()
 
@@ -126,7 +126,7 @@ class TestGetEmployee:
             "address": "Москва",
         }
         redis.get = AsyncMock(return_value=json.dumps(cached))
-        result = await get_employee(session, redis, employee_id=1, company_id=1)
+        result = await get_employee(session, redis, repo_cls.return_value, 1, 1)
         assert result is not None
         assert result.id == 1
         assert result.company_id == 1
@@ -160,7 +160,7 @@ class TestGetEmployee:
         }
         redis.get = AsyncMock(return_value=json.dumps(cached))
         with pytest.raises(HTTPException) as exc_info:
-            await get_employee(session, redis, employee_id=1, company_id=1)
+            await get_employee(session, redis, repo_cls.return_value, 1, 1)
         assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
 
@@ -170,7 +170,7 @@ class TestGetEmployee:
         redis.get = AsyncMock(return_value=None)
         employee_in_db = _mock_employee(employee_id=1, company_id=1)
         repo_cls.return_value.get_by_id = AsyncMock(return_value=employee_in_db)
-        result = await get_employee(session, redis, employee_id=1, company_id=1)
+        result = await get_employee(session, redis, repo_cls.return_value, 1, 1)
         assert result is not None
         assert result.id == 1
         assert result.company_id == 1
@@ -183,7 +183,7 @@ class TestGetEmployee:
         redis.get = AsyncMock(return_value=None)
         repo_cls.return_value.get_by_id = AsyncMock(return_value=None)
         with pytest.raises(HTTPException) as exc_info:
-            await get_employee(session, redis, employee_id=999, company_id=1)
+            await get_employee(session, redis, repo_cls.return_value, 999, 1)
         assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
 
@@ -194,7 +194,7 @@ class TestGetEmployee:
         employee_other_company = _mock_employee(employee_id=1, company_id=2)
         repo_cls.return_value.get_by_id = AsyncMock(return_value=employee_other_company)
         with pytest.raises(HTTPException) as exc_info:
-            await get_employee(session, redis, employee_id=1, company_id=1)
+            await get_employee(session, redis, repo_cls.return_value, 1, 1)
         assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
 
@@ -209,7 +209,7 @@ class TestUpdateEmployee:
         repo_cls.return_value.get_by_id = AsyncMock(return_value=old_employee)
         repo_cls.return_value.update = AsyncMock(return_value=updated_employee)
         data = EmployeeUpdate(first_name="Пётр")
-        result = await update_employee(session, redis, employee_id=1, employee_data=data, company_id=1)
+        result = await update_employee(session, redis, repo_cls.return_value, 1, data, 1)
         assert result is not None
         assert result.first_name == "Пётр"
         redis.set.assert_awaited_once()
@@ -221,7 +221,7 @@ class TestUpdateEmployee:
         repo_cls.return_value.get_by_id = AsyncMock(return_value=None)
         data = EmployeeUpdate(first_name="Пётр")
         with pytest.raises(HTTPException) as exc_info:
-            await update_employee(session, redis, employee_id=999, employee_data=data, company_id=1)
+            await update_employee(session, redis, repo_cls.return_value, 999, data, 1)
         assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
 
@@ -232,7 +232,7 @@ class TestUpdateEmployee:
         repo_cls.return_value.get_by_id = AsyncMock(return_value=employee_other_company)
         data = EmployeeUpdate(first_name="Пётр")
         with pytest.raises(HTTPException) as exc_info:
-            await update_employee(session, redis, employee_id=1, employee_data=data, company_id=1)
+            await update_employee(session, redis, repo_cls.return_value, 1, data, 1)
         assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
 
@@ -245,7 +245,7 @@ class TestUpdateEmployee:
         repo_cls.return_value.get_by_id = AsyncMock(return_value=old_employee)
         repo_cls.return_value.update = AsyncMock(return_value=updated_employee)
         data = EmployeeUpdate(salary=Decimal("60000.00"))
-        result = await update_employee(session, redis, employee_id=1, employee_data=data, company_id=1)
+        result = await update_employee(session, redis, repo_cls.return_value, 1, data, 1)
         assert result.salary == Decimal("60000.00")
         repo_cls.return_value.update.assert_awaited_once()
 
@@ -262,7 +262,7 @@ class TestDismissEmployees:
         emp = _mock_employee(employee_id=1, company_id=1)
         repo_cls.return_value.get_by_id = AsyncMock(return_value=emp)
         repo_cls.return_value.delete = AsyncMock()
-        result = await dismiss_employees(session, redis_with_delete, [1], company_id=1)
+        result = await dismiss_employees(session, redis_with_delete, repo_cls.return_value, [1], 1)
         assert result["message"] == "Employees dismissed successfully"
         repo_cls.return_value.get_by_id.assert_awaited_once_with(session, 1)
         repo_cls.return_value.delete.assert_awaited_once_with(session, emp)
@@ -276,7 +276,7 @@ class TestDismissEmployees:
         emp2 = _mock_employee(employee_id=2, company_id=1)
         repo_cls.return_value.get_by_id = AsyncMock(side_effect=[emp1, emp2])
         repo_cls.return_value.delete = AsyncMock()
-        result = await dismiss_employees(session, redis_with_delete, [1, 2], company_id=1)
+        result = await dismiss_employees(session, redis_with_delete, repo_cls.return_value, [1, 2], 1)
         assert result["message"] == "Employees dismissed successfully"
         assert repo_cls.return_value.get_by_id.await_count == 2
         assert repo_cls.return_value.delete.await_count == 2
@@ -289,7 +289,7 @@ class TestDismissEmployees:
         repo_cls.return_value.get_by_id = AsyncMock(return_value=None)
         repo_cls.return_value.delete = AsyncMock()
         with pytest.raises(HTTPException) as exc_info:
-            await dismiss_employees(session, redis_with_delete, [999], company_id=1)
+            await dismiss_employees(session, redis_with_delete, repo_cls.return_value, [999], 1)
         assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
         assert repo_cls.return_value.delete.await_count == 0
@@ -301,6 +301,6 @@ class TestDismissEmployees:
         repo_cls.return_value.get_by_id = AsyncMock(return_value=emp_other)
         repo_cls.return_value.delete = AsyncMock()
         with pytest.raises(HTTPException) as exc_info:
-            await dismiss_employees(session, redis_with_delete, [1], company_id=1)
+            await dismiss_employees(session, redis_with_delete, repo_cls.return_value, [1], 1)
         assert exc_info.value.status_code == 404
         assert repo_cls.return_value.delete.await_count == 0
