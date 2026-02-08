@@ -40,3 +40,12 @@ async def update_employee(
     redis: Redis=Depends(get_redis)):
     employee = await EmployeeService.update_employee(session, redis, employee_id, employee_data, company_id)
     return employee
+
+
+@router.delete("/")
+async def dismiss_employees(
+    employee_ids: list[int], 
+    company_id: int=Depends(get_company_id), 
+    session: AsyncSession=Depends(get_session), 
+    redis: Redis=Depends(get_redis)):
+    return await EmployeeService.dismiss_employees(session, redis, employee_ids, company_id)

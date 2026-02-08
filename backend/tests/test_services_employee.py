@@ -7,7 +7,7 @@ import pytest
 from fastapi import HTTPException
 
 from app.schemas import EmployeeCreate, EmployeeUpdate
-from app.services.EmployeeService import create_employee, get_employee, update_employee
+from app.services.EmployeeService import create_employee, dismiss_employees, get_employee, update_employee
 
 
 def _valid_employee_create():
@@ -248,3 +248,59 @@ class TestUpdateEmployee:
         result = await update_employee(session, redis, employee_id=1, employee_data=data, company_id=1)
         assert result.salary == Decimal("60000.00")
         repo_cls.return_value.update.assert_awaited_once()
+
+
+class TestDismissEmployees:
+    @pytest.fixture
+    def redis_with_delete(self, redis):
+        redis.delete = AsyncMock()
+        return redis
+
+    @pytest.mark.asyncio
+    @patch("app.services.EmployeeService.EmployeeRepository")
+    async def test_dismiss_one_employee_success(self, repo_cls, session, redis_with_delete):
+        emp = _mock_employee(employee_id=1, company_id=1)
+        repo_cls.return_value.get_by_id = AsyncMock(return_value=emp)
+        repo_cls.return_value.delete = AsyncMock()
+        result = await dismiss_employees(session, redis_with_delete, [1], company_id=1)
+        assert result["message"] == "Employees dismissed successfully"
+        repo_cls.return_value.get_by_id.assert_awaited_once_with(session, 1)
+        repo_cls.return_value.delete.assert_awaited_once_with(session, emp)
+        redis_with_delete.delete.assert_awaited_once_with("employee_1")
+        session.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    @patch("app.services.EmployeeService.EmployeeRepository")
+    async def test_dismiss_multiple_employees_success(self, repo_cls, session, redis_with_delete):
+        emp1 = _mock_employee(employee_id=1, company_id=1)
+        emp2 = _mock_employee(employee_id=2, company_id=1)
+        repo_cls.return_value.get_by_id = AsyncMock(side_effect=[emp1, emp2])
+        repo_cls.return_value.delete = AsyncMock()
+        result = await dismiss_employees(session, redis_with_delete, [1, 2], company_id=1)
+        assert result["message"] == "Employees dismissed successfully"
+        assert repo_cls.return_value.get_by_id.await_count == 2
+        assert repo_cls.return_value.delete.await_count == 2
+        assert redis_with_delete.delete.await_count == 2
+        session.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    @patch("app.services.EmployeeService.EmployeeRepository")
+    async def test_dismiss_employee_not_found_raises_404(self, repo_cls, session, redis_with_delete):
+        repo_cls.return_value.get_by_id = AsyncMock(return_value=None)
+        repo_cls.return_value.delete = AsyncMock()
+        with pytest.raises(HTTPException) as exc_info:
+            await dismiss_employees(session, redis_with_delete, [999], company_id=1)
+        assert exc_info.value.status_code == 404
+        assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
+        assert repo_cls.return_value.delete.await_count == 0
+
+    @pytest.mark.asyncio
+    @patch("app.services.EmployeeService.EmployeeRepository")
+    async def test_dismiss_employee_wrong_company_raises_404(self, repo_cls, session, redis_with_delete):
+        emp_other = _mock_employee(employee_id=1, company_id=2)
+        repo_cls.return_value.get_by_id = AsyncMock(return_value=emp_other)
+        repo_cls.return_value.delete = AsyncMock()
+        with pytest.raises(HTTPException) as exc_info:
+            await dismiss_employees(session, redis_with_delete, [1], company_id=1)
+        assert exc_info.value.status_code == 404
+        assert repo_cls.return_value.delete.await_count == 0

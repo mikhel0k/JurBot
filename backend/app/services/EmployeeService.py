@@ -78,3 +78,23 @@ async def update_employee(session: AsyncSession, redis: Redis, employee_id: int,
     except Exception as e:
         logger.exception("Failed to update employee id=%s: %s", employee_id, e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+
+
+async def dismiss_employees(session: AsyncSession, redis: Redis, employee_ids: list[int], company_id: int):
+    logger.info("Dismissing employees company_id=%s", company_id)
+    try:
+        for employee_id in employee_ids:
+            employee_in_db = await EmployeeRepository().get_by_id(session, employee_id)
+            if not employee_in_db or employee_in_db.company_id != company_id:
+                logger.warning("Employee not found or access denied id=%s company_id=%s", employee_id, company_id)
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=EMPLOYEE_NOT_FOUND)
+            await EmployeeRepository().delete(session, employee_in_db)
+            await redis.delete(f"employee_{employee_id}")
+            logger.info("Employee dismissed id=%s", employee_id)
+        await session.commit()
+        return {"message": "Employees dismissed successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to dismiss employees: %s", e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
