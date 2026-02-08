@@ -194,3 +194,13 @@ class TestConfirmLogin:
             await confirm_login(session, redis, data)
         assert exc_info.value.status_code == 401
         assert "invalid" in exc_info.value.detail.lower()
+
+    @pytest.mark.asyncio
+    @patch("app.services.AuthService.CompanyRepository")
+    async def test_confirm_login_unexpected_error_raises_500(self, repo_cls, session, redis):
+        redis.get = AsyncMock(return_value=json.dumps({"id": 1, "email": "u@u.ru", "phone_number": "+79991234567", "full_name": "User"}))
+        repo_cls.return_value.get_by_user_id = AsyncMock(side_effect=RuntimeError("DB error"))
+        with pytest.raises(HTTPException) as exc_info:
+            await confirm_login(session, redis, Confirm(jti="jti", code="123456"))
+        assert exc_info.value.status_code == 500
+        assert "internal" in exc_info.value.detail.lower()

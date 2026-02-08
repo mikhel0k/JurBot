@@ -157,3 +157,13 @@ class TestUpdateCompany:
         assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower()
         assert update_mock.await_count == 0
+
+    @pytest.mark.asyncio
+    @patch("app.services.CompanyService.CompanyRepository")
+    async def test_get_company_unexpected_error_raises_500(self, repo_cls, session, redis):
+        redis.get = AsyncMock(return_value=None)
+        repo_cls.return_value.get_by_user_id = AsyncMock(side_effect=RuntimeError("DB error"))
+        with pytest.raises(HTTPException) as exc_info:
+            await get_company(session, redis, user_id=1)
+        assert exc_info.value.status_code == 500
+        assert "internal" in exc_info.value.detail.lower()
