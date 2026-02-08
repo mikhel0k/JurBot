@@ -36,6 +36,13 @@ class Settings(BaseSettings):
 
     SEND_LOGIN_CODE_EMAIL: bool = True
 
+    ENVIRONMENT: str = "production"  # "development" — secure=False для cookies (localhost)
+
+    @property
+    def SECURE_COOKIES(self) -> bool:
+        """False в development для работы cookies по HTTP (localhost)."""
+        return self.ENVIRONMENT != "development"
+
     @property
     def DATABASE_URL(self) -> str:
         return (f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"

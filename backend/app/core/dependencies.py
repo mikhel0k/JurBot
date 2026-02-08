@@ -7,21 +7,20 @@ from app.core.security import ACCESS_TOKEN_COOKIE_MAX_AGE, decode_token, set_tok
 from app.repository import CompanyRepository, EmployeeRepository, UserRepository
 from app.services import AuthService
 
-_user_repo = UserRepository()
-_company_repo = CompanyRepository()
-_employee_repo = EmployeeRepository()
-
 
 def get_employee_repo() -> EmployeeRepository:
-    return _employee_repo
+    """Возвращает экземпляр EmployeeRepository. Используется как FastAPI Depends."""
+    return EmployeeRepository()
 
 
 def get_company_repo() -> CompanyRepository:
-    return _company_repo
+    """Возвращает экземпляр CompanyRepository. Используется как FastAPI Depends."""
+    return CompanyRepository()
 
 
 def get_user_repo() -> UserRepository:
-    return _user_repo
+    """Возвращает экземпляр UserRepository. Используется как FastAPI Depends."""
+    return UserRepository()
 
 
 def _decode_access_token(token: str) -> dict:

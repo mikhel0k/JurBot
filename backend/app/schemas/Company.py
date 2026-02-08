@@ -44,7 +44,18 @@ class CompanyBase(BaseModel):
 
 
 class CompanyCreate(CompanyBase):
-    pass
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "name": "ООО Рога и копыта",
+                    "inn": "7707083893",
+                    "snils": "12345678901",
+                    "address": "г. Москва, ул. Примерная, д. 1",
+                }
+            ]
+        }
+    }
 
 
 class CompanyUpdate(BaseModel):

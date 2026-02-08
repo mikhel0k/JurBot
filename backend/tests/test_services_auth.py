@@ -2,8 +2,8 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import HTTPException
 
+from app.core.exceptions import AlreadyExistsError, InvalidCodeError, UnauthorizedError
 from app.schemas import UserCreate, Confirm, Login
 from app.services.AuthService import (
     register,
@@ -68,18 +68,16 @@ class TestRegister:
     @patch("app.services.AuthService.UserRepository")
     async def test_register_fails_if_email_in_redis(self, repo_cls, session, redis):
         redis.exists = AsyncMock(return_value=True)
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(AlreadyExistsError) as exc_info:
             await register(session, redis, repo_cls.return_value, _user_create())
-        assert exc_info.value.status_code == 400
         assert "already exists" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
     @patch("app.services.AuthService.UserRepository")
     async def test_register_fails_if_user_exists_in_db(self, repo_cls, session, redis):
         repo_cls.return_value.get_by_email = AsyncMock(return_value=_mock_user_in_db())
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(AlreadyExistsError) as exc_info:
             await register(session, redis, repo_cls.return_value, _user_create())
-        assert exc_info.value.status_code == 400
         assert "already exists" in exc_info.value.detail.lower()
 
 
@@ -111,9 +109,8 @@ class TestConfirmRegistration:
     async def test_confirm_registration_invalid_code_raises_401(self, session, redis):
         redis.get = AsyncMock(return_value=None)
         data = Confirm(jti="jti-123", code="wrong")
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(InvalidCodeError) as exc_info:
             await confirm_registration(session, redis, MagicMock(), data)
-        assert exc_info.value.status_code == 401
         assert "invalid" in exc_info.value.detail.lower()
 
 
@@ -135,9 +132,8 @@ class TestLogin:
     @patch("app.services.AuthService.UserRepository")
     async def test_login_user_not_found_raises_401(self, repo_cls, session, redis):
         repo_cls.return_value.get_by_email = AsyncMock(return_value=None)
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(UnauthorizedError) as exc_info:
             await login(session, redis, repo_cls.return_value, Login(email="nobody@example.com", password="x"))
-        assert exc_info.value.status_code == 401
         assert "invalid" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
@@ -145,9 +141,8 @@ class TestLogin:
     @patch("app.services.AuthService.UserRepository")
     async def test_login_wrong_password_raises_401(self, repo_cls, verify_pwd, session, redis):
         repo_cls.return_value.get_by_email = AsyncMock(return_value=_mock_user_in_db())
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(UnauthorizedError) as exc_info:
             await login(session, redis, repo_cls.return_value, Login(email="user@example.com", password="wrong"))
-        assert exc_info.value.status_code == 401
         assert "invalid" in exc_info.value.detail.lower()
 
 
@@ -190,17 +185,14 @@ class TestConfirmLogin:
     async def test_confirm_login_invalid_code_raises_401(self, session, redis):
         redis.get = AsyncMock(return_value=None)
         data = Confirm(jti="jti", code="wrong")
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(InvalidCodeError) as exc_info:
             await confirm_login(session, redis, MagicMock(), data)
-        assert exc_info.value.status_code == 401
         assert "invalid" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
     @patch("app.services.AuthService.CompanyRepository")
-    async def test_confirm_login_unexpected_error_raises_500(self, repo_cls, session, redis):
+    async def test_confirm_login_unexpected_error_propagates(self, repo_cls, session, redis):
         redis.get = AsyncMock(return_value=json.dumps({"id": 1, "email": "u@u.ru", "phone_number": "+79991234567", "full_name": "User"}))
         repo_cls.return_value.get_by_user_id = AsyncMock(side_effect=RuntimeError("DB error"))
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(RuntimeError):
             await confirm_login(session, redis, repo_cls.return_value, Confirm(jti="jti", code="123456"))
-        assert exc_info.value.status_code == 500
-        assert "internal" in exc_info.value.detail.lower()

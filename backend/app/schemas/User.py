@@ -33,6 +33,19 @@ class UserCreate(UserBase):
         ),
     ]
 
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "email": "user@example.com",
+                    "phone_number": "+79991234567",
+                    "full_name": "Иван Иванов",
+                    "password": "securepassword123",
+                }
+            ]
+        }
+    }
+
 
 class UserUpdate(BaseOptionalContacts):
     full_name: Annotated[
@@ -53,13 +66,26 @@ class UserResponse(UserBase):
 
 
 class Confirm(BaseModel):
+    """JTI (из register/login) и 6-значный код из email."""
     jti: str
     code: str
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{"jti": "550e8400-e29b-41d4-a716-446655440000", "code": "123456"}]
+        }
+    }
 
 
 class Login(BaseModel):
     email: Email
     password: str
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{"email": "user@example.com", "password": "secret123"}]
+        }
+    }
 
 
 class LoginCachePayload(BaseModel):

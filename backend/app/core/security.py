@@ -44,16 +44,21 @@ def decode_token(token: str) -> dict:
 
 
 def set_token(response: Response, token: str, key: str, max_age: int, path: str = "/") -> None:
-    """Выставляет cookie с токеном (httponly, secure, samesite=lax)."""
+    """Выставляет cookie с токеном (httponly, secure в prod, samesite=lax)."""
     response.set_cookie(
         key=key,
         value=token,
         httponly=True,
         samesite="lax",
-        secure=True,
+        secure=settings.SECURE_COOKIES,
         max_age=max_age,
         path=path,
     )
+
+
+def clear_token(response: Response, key: str, path: str = "/") -> None:
+    """Удаляет cookie с токеном."""
+    response.delete_cookie(key=key, path=path, httponly=True, samesite="lax", secure=settings.SECURE_COOKIES)
 
 
 def send_code_email_gmail(to_email: str, code: str) -> None:

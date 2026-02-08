@@ -18,6 +18,7 @@ session_factory = async_sessionmaker(
 
 
 async def get_session():
+    """Асинхронный генератор сессии БД. При исключении выполняет rollback."""
     async with session_factory() as session:
         try:
             yield session

@@ -4,10 +4,10 @@ from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import HTTPException
 
+from app.core.exceptions import NotFoundError
 from app.schemas import EmployeeCreate, EmployeeUpdate
-from app.services.EmployeeService import create_employee, dismiss_employees, get_employee, update_employee
+from app.services.EmployeeService import create_employee, dismiss_employees, get_employee, list_employees, update_employee
 
 
 def _valid_employee_create():
@@ -71,6 +71,27 @@ def redis():
     return r
 
 
+class TestListEmployees:
+    @pytest.mark.asyncio
+    @patch("app.services.EmployeeService.EmployeeRepository")
+    async def test_list_employees_returns_all_for_company(self, repo_cls, session):
+        emp1 = _mock_employee(employee_id=1, company_id=1)
+        emp2 = _mock_employee(employee_id=2, company_id=1)
+        repo_cls.return_value.get_all_by_company_id = AsyncMock(return_value=[emp1, emp2])
+        result = await list_employees(session, repo_cls.return_value, 1)
+        assert len(result) == 2
+        assert result[0].id == 1
+        assert result[1].id == 2
+        repo_cls.return_value.get_all_by_company_id.assert_awaited_once_with(session, 1)
+
+    @pytest.mark.asyncio
+    @patch("app.services.EmployeeService.EmployeeRepository")
+    async def test_list_employees_empty(self, repo_cls, session):
+        repo_cls.return_value.get_all_by_company_id = AsyncMock(return_value=[])
+        result = await list_employees(session, repo_cls.return_value, 1)
+        assert result == []
+
+
 class TestCreateEmployee:
     @pytest.mark.asyncio
     @patch("app.services.EmployeeService.Employee")
@@ -91,12 +112,10 @@ class TestCreateEmployee:
 
     @pytest.mark.asyncio
     @patch("app.services.EmployeeService.EmployeeRepository")
-    async def test_create_employee_repository_error_raises_500(self, repo_cls, session, redis):
+    async def test_create_employee_repository_error_propagates(self, repo_cls, session, redis):
         repo_cls.return_value.create = AsyncMock(side_effect=RuntimeError("DB error"))
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(RuntimeError):
             await create_employee(session, redis, repo_cls.return_value, _valid_employee_create(), 1)
-        assert exc_info.value.status_code == 500
-        assert "internal" in exc_info.value.detail.lower()
 
 
 class TestGetEmployee:
@@ -159,9 +178,8 @@ class TestGetEmployee:
             "address": "Москва",
         }
         redis.get = AsyncMock(return_value=json.dumps(cached))
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             await get_employee(session, redis, repo_cls.return_value, 1, 1)
-        assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
@@ -182,9 +200,8 @@ class TestGetEmployee:
     async def test_get_employee_not_found_raises_404(self, repo_cls, session, redis):
         redis.get = AsyncMock(return_value=None)
         repo_cls.return_value.get_by_id = AsyncMock(return_value=None)
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             await get_employee(session, redis, repo_cls.return_value, 999, 1)
-        assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
@@ -193,9 +210,8 @@ class TestGetEmployee:
         redis.get = AsyncMock(return_value=None)
         employee_other_company = _mock_employee(employee_id=1, company_id=2)
         repo_cls.return_value.get_by_id = AsyncMock(return_value=employee_other_company)
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             await get_employee(session, redis, repo_cls.return_value, 1, 1)
-        assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
 
 
@@ -220,9 +236,8 @@ class TestUpdateEmployee:
     async def test_update_employee_not_found_raises_404(self, repo_cls, session, redis):
         repo_cls.return_value.get_by_id = AsyncMock(return_value=None)
         data = EmployeeUpdate(first_name="Пётр")
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             await update_employee(session, redis, repo_cls.return_value, 999, data, 1)
-        assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
@@ -231,9 +246,8 @@ class TestUpdateEmployee:
         employee_other_company = _mock_employee(employee_id=1, company_id=2)
         repo_cls.return_value.get_by_id = AsyncMock(return_value=employee_other_company)
         data = EmployeeUpdate(first_name="Пётр")
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             await update_employee(session, redis, repo_cls.return_value, 1, data, 1)
-        assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
 
     @pytest.mark.asyncio
@@ -288,9 +302,8 @@ class TestDismissEmployees:
     async def test_dismiss_employee_not_found_raises_404(self, repo_cls, session, redis_with_delete):
         repo_cls.return_value.get_by_id = AsyncMock(return_value=None)
         repo_cls.return_value.delete = AsyncMock()
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             await dismiss_employees(session, redis_with_delete, repo_cls.return_value, [999], 1)
-        assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower() or "owner" in exc_info.value.detail.lower()
         assert repo_cls.return_value.delete.await_count == 0
 
@@ -300,7 +313,6 @@ class TestDismissEmployees:
         emp_other = _mock_employee(employee_id=1, company_id=2)
         repo_cls.return_value.get_by_id = AsyncMock(return_value=emp_other)
         repo_cls.return_value.delete = AsyncMock()
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(NotFoundError):
             await dismiss_employees(session, redis_with_delete, repo_cls.return_value, [1], 1)
-        assert exc_info.value.status_code == 404
         assert repo_cls.return_value.delete.await_count == 0
