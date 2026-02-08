@@ -32,28 +32,14 @@ def _valid_employee_base():
 
 class TestEmployeeCreate:
     def test_valid(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base()
         obj = EmployeeCreate(**data)
-        assert obj.company_id == 1
         assert obj.first_name == "Иван"
         assert obj.salary == Decimal("50000.00")
         assert obj.inn == "123456789012"
 
-    def test_company_id_required(self):
-        data = _valid_employee_base()
-        with pytest.raises(ValidationError):
-            EmployeeCreate(**data)
-
-    def test_company_id_positive_only(self):
-        data = {**_valid_employee_base(), "company_id": 0}
-        with pytest.raises(ValidationError):
-            EmployeeCreate(**data)
-        data["company_id"] = -1
-        with pytest.raises(ValidationError):
-            EmployeeCreate(**data)
-
     def test_first_name_max_150(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["first_name"] = "X" * 150
         obj = EmployeeCreate(**data)
         assert len(obj.first_name) == 150
@@ -63,7 +49,7 @@ class TestEmployeeCreate:
 
     def test_last_name_middle_name_position_status_max_150(self):
         for field in ("last_name", "middle_name", "position", "status"):
-            data = {**_valid_employee_base(), "company_id": 1}
+            data = _valid_employee_base().copy()
             data[field] = "X" * 150
             obj = EmployeeCreate(**data)
             assert len(getattr(obj, field)) == 150
@@ -73,7 +59,7 @@ class TestEmployeeCreate:
 
     def test_passport_series_number_code_max_10(self):
         for field in ("passport_series", "passport_number", "passport_issued_code"):
-            data = {**_valid_employee_base(), "company_id": 1}
+            data = _valid_employee_base().copy()
             data[field] = "X" * 10
             obj = EmployeeCreate(**data)
             assert len(getattr(obj, field)) == 10
@@ -82,7 +68,7 @@ class TestEmployeeCreate:
                 EmployeeCreate(**data)
 
     def test_passport_issued_place_max_255(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["passport_issued_place"] = "X" * 255
         obj = EmployeeCreate(**data)
         assert len(obj.passport_issued_place) == 255
@@ -91,43 +77,43 @@ class TestEmployeeCreate:
             EmployeeCreate(**data)
 
     def test_inn_10_digits_valid(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["inn"] = "1234567890"
         obj = EmployeeCreate(**data)
         assert obj.inn == "1234567890"
 
     def test_inn_12_digits_valid(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["inn"] = "123456789012"
         obj = EmployeeCreate(**data)
         assert obj.inn == "123456789012"
 
     def test_inn_9_invalid(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["inn"] = "123456789"
         with pytest.raises(ValidationError):
             EmployeeCreate(**data)
 
     def test_inn_13_invalid(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["inn"] = "1234567890123"
         with pytest.raises(ValidationError):
             EmployeeCreate(**data)
 
     def test_snils_exactly_11_valid(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["snils"] = "12345678901"
         obj = EmployeeCreate(**data)
         assert obj.snils == "12345678901"
 
     def test_snils_10_invalid(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["snils"] = "1234567890"
         with pytest.raises(ValidationError):
             EmployeeCreate(**data)
 
     def test_address_max_255(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["address"] = "X" * 255
         obj = EmployeeCreate(**data)
         assert len(obj.address) == 255
@@ -136,23 +122,23 @@ class TestEmployeeCreate:
             EmployeeCreate(**data)
 
     def test_salary_decimal_accepted(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["salary"] = Decimal("0.01")
         obj = EmployeeCreate(**data)
         assert obj.salary == Decimal("0.01")
 
     def test_hire_date_and_passport_date_required(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         del data["hire_date"]
         with pytest.raises(ValidationError):
             EmployeeCreate(**data)
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         del data["passport_issued_date"]
         with pytest.raises(ValidationError):
             EmployeeCreate(**data)
 
     def test_invalid_date_type_rejected(self):
-        data = {**_valid_employee_base(), "company_id": 1}
+        data = _valid_employee_base().copy()
         data["hire_date"] = "not-a-date"
         with pytest.raises(ValidationError):
             EmployeeCreate(**data)
@@ -340,12 +326,10 @@ class TestEmployeeResponse:
         assert obj.first_name == "Иван"
 
     def test_id_and_company_id_positive(self):
-        data = {**_valid_employee_base(), "company_id": 1}
-        create_obj = EmployeeCreate(**data)
         mock = MagicMock()
         mock.id = 0
         mock.company_id = 1
-        for attr, val in create_obj.model_dump().items():
+        for attr, val in _valid_employee_base().items():
             setattr(mock, attr, val)
         with pytest.raises(ValidationError):
             EmployeeResponse.model_validate(mock)

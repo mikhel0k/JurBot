@@ -30,7 +30,7 @@ class DocumentBase(BaseModel):
 
 
 class DocumentCreate(DocumentBase):
-    employee_id: Id
+    pass
 
 
 class DocumentUpdate(BaseModel):

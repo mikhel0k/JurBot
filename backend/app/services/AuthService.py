@@ -49,6 +49,7 @@ async def confirm_registration(session: AsyncSession, redis: Redis, data: Confir
     user = UserResponse.model_validate(user_in_db)
     data_for_token = {
         "sub": str(user.id),
+        "company_id": None,
     }
     data_for_refresh_token = {
         "sub": str(user.id),
@@ -82,8 +83,10 @@ async def confirm_login(session: AsyncSession, redis: Redis, data: Confirm):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid code")
     user_data = json.loads(payload)
     await redis.delete(f"{jti}_{code}")
+    company_in_db = await CompanyRepository().get_by_user_id(session, user_data["id"])
     data_for_token = {
         "sub": str(user_data["id"]),
+        "company_id": company_in_db.id if company_in_db else None,
     }
     data_for_refresh_token = {
         "sub": str(user_data["id"]),
@@ -92,7 +95,6 @@ async def confirm_login(session: AsyncSession, redis: Redis, data: Confirm):
     refresh_token = create_token(data_for_refresh_token, duration=REFRESH_TOKEN_DURATION_MIN)
     await redis.set(f"{user_data['id']}_refresh_token", refresh_token, ex=60*60*24*30)
     message = "you do not have a company yet"
-    company_in_db = await CompanyRepository().get_by_user_id(session, user_data["id"])
     if company_in_db:
         await redis.set(f"company_{company_in_db.owner_id}", json.dumps(CompanyResponse.model_validate(company_in_db).model_dump()), ex=60*30)
         message = "success"

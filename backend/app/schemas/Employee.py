@@ -87,7 +87,7 @@ class EmployeeBase(BaseContacts):
 
 
 class EmployeeCreate(EmployeeBase):
-    company_id: Id
+    pass
 
 
 class EmployeeUpdate(BaseOptionalContacts):

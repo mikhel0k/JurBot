@@ -17,70 +17,56 @@ def _valid_document_base():
 
 class TestDocumentCreate:
     def test_valid(self):
-        data = {**_valid_document_base(), "employee_id": 1}
+        data = _valid_document_base()
         obj = DocumentCreate(**data)
-        assert obj.employee_id == 1
         assert obj.type == "Трудовой договор"
         assert obj.file_path == "/uploads/doc_123.pdf"
         assert obj.created_at == date(2024, 1, 15)
 
-    def test_employee_id_required(self):
-        data = _valid_document_base()
-        with pytest.raises(ValidationError):
-            DocumentCreate(**data)
-
-    def test_employee_id_positive_only(self):
-        data = {**_valid_document_base(), "employee_id": 0}
-        with pytest.raises(ValidationError):
-            DocumentCreate(**data)
-        data["employee_id"] = -1
-        with pytest.raises(ValidationError):
-            DocumentCreate(**data)
-
     def test_type_required(self):
-        data = {**_valid_document_base(), "employee_id": 1}
+        data = _valid_document_base().copy()
         del data["type"]
         with pytest.raises(ValidationError):
             DocumentCreate(**data)
 
     def test_type_max_length_150_valid(self):
-        data = {**_valid_document_base(), "employee_id": 1}
+        data = _valid_document_base().copy()
         data["type"] = "X" * 150
         obj = DocumentCreate(**data)
         assert len(obj.type) == 150
 
     def test_type_over_150_invalid(self):
-        data = {**_valid_document_base(), "employee_id": 1}
+        data = _valid_document_base().copy()
         data["type"] = "x" * 151
         with pytest.raises(ValidationError):
             DocumentCreate(**data)
 
     def test_file_path_required(self):
-        data = {**_valid_document_base(), "employee_id": 1}
+        data = _valid_document_base().copy()
         del data["file_path"]
         with pytest.raises(ValidationError):
             DocumentCreate(**data)
 
     def test_file_path_max_length_255_valid(self):
-        data = {**_valid_document_base(), "employee_id": 1}
+        data = _valid_document_base().copy()
         data["file_path"] = "/" + "x" * 254
         obj = DocumentCreate(**data)
         assert len(obj.file_path) == 255
 
     def test_file_path_over_255_invalid(self):
-        data = {**_valid_document_base(), "employee_id": 1}
+        data = _valid_document_base().copy()
         data["file_path"] = "x" * 256
         with pytest.raises(ValidationError):
             DocumentCreate(**data)
 
     def test_created_at_required(self):
-        data = {**_valid_document_base(), "employee_id": 1}
+        data = _valid_document_base().copy()
         del data["created_at"]
         with pytest.raises(ValidationError):
             DocumentCreate(**data)
 
     def test_created_at_invalid_type_rejected(self):
-        data = {**_valid_document_base(), "employee_id": 1}
+        data = _valid_document_base().copy()
         data["created_at"] = "2024-01-15"
         obj = DocumentCreate(**data)
         assert obj.created_at == date(2024, 1, 15)

@@ -7,6 +7,8 @@ from app.schemas import CompanyCreate, CompanyResponse, CompanyUpdate
 from app.repository import CompanyRepository
 from fastapi import HTTPException, status
 
+from app.core import create_token
+
 
 async def create_company(session: AsyncSession, redis: Redis, company_data: CompanyCreate, user_id: int):
     if await CompanyRepository().get_by_user_id(session, user_id):
@@ -17,7 +19,12 @@ async def create_company(session: AsyncSession, redis: Redis, company_data: Comp
     company = CompanyResponse.model_validate(company_in_db)
     await redis.set(f"company_{user_id}", json.dumps(company.model_dump()), ex=60*30)
     await session.commit()
-    return company
+    data_for_token = {
+        "sub": str(user_id),
+        "company_id": company_in_db.id,
+    }
+    access_token = create_token(data_for_token)
+    return company, access_token
 
 
 async def get_company(session: AsyncSession, redis: Redis, user_id: int):

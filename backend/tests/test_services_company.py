@@ -51,11 +51,13 @@ class TestCreateCompany:
         repo_cls.return_value.get_by_user_id = AsyncMock(return_value=None)
         created = _mock_company(owner_id=1, id=5)
         repo_cls.return_value.create = AsyncMock(return_value=created)
-        result = await create_company(session, redis, _company_create(), user_id=1)
-        assert result is not None
-        assert result.id == 5
-        assert result.owner_id == 1
-        assert result.name == _company_create().name
+        company, access_token = await create_company(session, redis, _company_create(), user_id=1)
+        assert company is not None
+        assert company.id == 5
+        assert company.owner_id == 1
+        assert company.name == _company_create().name
+        assert access_token is not None
+        assert isinstance(access_token, str)
         redis.set.assert_awaited_once()
         call_args = redis.set.await_args
         assert call_args[0][0] == "company_1"
