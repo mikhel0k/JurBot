@@ -21,3 +21,5 @@ __pycache__/
 
 redis/ 
 *.rdb
+
+logs/

@@ -5,7 +5,6 @@ from typing import Optional
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Корень backend (родитель каталога app: core -> app -> backend)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(dotenv_path=str(BASE_DIR / ".env"))
 
@@ -17,7 +16,6 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str
     POSTGRES_PORT: int
 
-    # Тестовая БД: опционально; если не задано — используются те же значения, что и для основной (удобно для prod).
     POSTGRES_DB_TEST: Optional[str] = None
     POSTGRES_USER_TEST: Optional[str] = None
     POSTGRES_PASSWORD_TEST: Optional[str] = None
@@ -33,16 +31,18 @@ class Settings(BaseSettings):
     JWT_PUBLIC_KEY: Path = BASE_DIR / "jwt_tokens" / "jwt-public.pem"
     ALGORITHM: str = "RS256"
 
-    # Gmail для кодов подтверждения: опционально (в dev/test можно не задавать — отправка будет пропущена).
     LOGIN_FOR_GMAIL: str = ""
     PASSWORD_FOR_GMAIL: str = ""
 
     SEND_LOGIN_CODE_EMAIL: bool = True
 
-    ENVIRONMENT: str = "production"  # "development" — secure=False для cookies (localhost)
+    ENVIRONMENT: str = "production"
 
-    # CORS: разрешённые origins (через запятую). Пусто — только same-origin.
     CORS_ORIGINS: str = ""
+
+    AI_CHAT_SERVICE_URL: str = "http://localhost:8001"
+
+    MONGO_URI: str = "mongodb://localhost:27017"
 
     @property
     def SECURE_COOKIES(self) -> bool:

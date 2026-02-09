@@ -12,10 +12,11 @@ from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.api.health import router as health_router
 from app.core.exceptions import AppException
-from app.core.logging import get_logger
+from app.core.logging import get_logger, setup_logging
 from app.core.redis import close_redis
 from app.core.security import _get_jwt_private_key, _get_jwt_public_key
 
+setup_logging()
 logger = get_logger(__name__)
 
 OPENAPI_DESCRIPTION = """
@@ -84,10 +85,10 @@ async def app_exception_handler(request, exc: AppException):
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request, exc: Exception):
     if isinstance(exc, HTTPException):
-        raise exc
+        raise exc   
     logger.exception("Unhandled exception: %s", exc)
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
