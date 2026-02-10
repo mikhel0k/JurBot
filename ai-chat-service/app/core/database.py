@@ -26,4 +26,4 @@ async def close_mongodb() -> None:
 async def get_db() -> AsyncGenerator[AsyncIOMotorDatabase[Any], None]:
     if _client is None:
         raise RuntimeError("MongoDB not initialized")
-    yield _client[settings.MONGO_DB]
+    yield _client[settings.MONGO_DB] 

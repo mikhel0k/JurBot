@@ -77,4 +77,3 @@ async def update_company(
     company_repo: CompanyRepository = Depends(get_company_repo),
 ):
     return await CompanyService.update_company(session, redis, company_repo, user_id, company)
-    

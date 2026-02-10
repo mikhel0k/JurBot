@@ -1,12 +1,9 @@
 from fastapi import APIRouter
 
-from app.api.v1.Auth import router as AuthRouter
-from app.api.v1.Chat import router as ChatRouter
-from app.api.v1.Company import router as CompanyRouter
-from app.api.v1.Employee import router as EmployeeRouter
+from app.api.v1 import auth, chat, company, employee
 
 router = APIRouter(prefix="/v1")
-router.include_router(AuthRouter)
-router.include_router(ChatRouter)
-router.include_router(CompanyRouter)
-router.include_router(EmployeeRouter)
+router.include_router(auth.router)
+router.include_router(chat.router)
+router.include_router(company.router)
+router.include_router(employee.router)
