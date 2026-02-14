@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
 
+    API_TOKEN: str
+
     LOG_LEVEL: str = "INFO"
 
     JWT_PRIVATE_KEY: Path = BASE_DIR / "jwt_tokens" / "jwt-private.pem"

@@ -1,3 +1,3 @@
-from .chat_service import ChatService
+from .chat_service import add_messages, get_history
 
-__all__ = ["ChatService"]
+__all__ = ["get_history", "add_messages"]

@@ -14,13 +14,13 @@ class ChatMessageIn(BaseModel):
     message: str
 
 
-@router.post("/", summary="Отправить сообщение в чат с ИИ")
+@router.post("", summary="Отправить сообщение в чат с ИИ")
 async def chat(
     body: ChatMessageIn,
     user_id: int = Depends(get_user_id),
 ):
-    url = f"{settings.AI_CHAT_SERVICE_URL.rstrip('/')}/ai_chat/v1/"
-    headers = {"User-ID": str(user_id)}
+    url = f"{settings.AI_CHAT_SERVICE_URL.rstrip('/')}/ai_chat/v1/chat"
+    headers = {"X-User-Id": str(user_id)}
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
             r = await client.post(url, json={"message": body.message}, headers=headers)

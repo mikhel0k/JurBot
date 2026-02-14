@@ -1,22 +1,56 @@
-"""Эндпоинты чата."""
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, HTTPException
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from openai import OpenAI
+from openai import AuthenticationError as OpenAIAuthError
 
+from app.core.config import settings
 from app.core.database import get_db
-from app.schemas import ChatMessageIn, ChatMessageOut
-from app.services import ChatService
+from app.core.dependencies import get_user_id
+from app.schemas.chat import ChatMessageIn
+from app.services import add_messages, get_history
+
+client = OpenAI(api_key=settings.API_TOKEN or "dummy")
+
+SYSTEM_PROMPT = "Ты профессиональный юрист, который помогает малым и средним предприятиям разобраться в юридических вопросах."
 
 router = APIRouter()
 
-# Backend проксирует с заголовком User-ID
-_USER_ID_HEADER = "User-ID"
 
-
-@router.post("/", response_model=ChatMessageOut, summary="Отправить сообщение (эхо + сохранение в MongoDB)")
+@router.post("/chat")
 async def chat(
-    body: ChatMessageIn,
-    db=Depends(get_db),
-    user_id: str | None = Header(None, alias=_USER_ID_HEADER),
+    request: ChatMessageIn,
+    user_id: int = Depends(get_user_id),
+    db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    uid = user_id or "anonymous"
-    message = await ChatService.echo(db, uid, body.message)
-    return ChatMessageOut(message=message)
+    if not settings.API_TOKEN:
+        raise HTTPException(
+            status_code=503,
+            detail="OpenAI API key not configured. Set API_TOKEN in ai-chat-service .env",
+        )
+    history = await get_history(db, user_id)
+    messages_for_api = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        *history,
+        {"role": "user", "content": request.message},
+    ]
+    try:
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages_for_api,
+        )
+    except OpenAIAuthError as e:
+        raise HTTPException(status_code=503, detail="OpenAI API key invalid or missing") from e
+    response_text = completion.choices[0].message.content if completion.choices else ""
+    await add_messages(
+        db,
+        user_id,
+        [
+            {"role": "user", "content": request.message},
+            {"role": "assistant", "content": response_text},
+        ],
+    )
+    return {
+        "response": response_text,
+        "user": user_id,
+    }
+    
