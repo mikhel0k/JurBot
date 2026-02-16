@@ -1,5 +1,5 @@
 """Эндпоинты управления сотрудниками. Требуют аутентификации и наличие компании (cookies)."""
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,10 +23,12 @@ router = APIRouter(prefix="/employee", tags=["employee"])
     },
 )
 async def list_employees(
-    company_id: int = Depends(get_company_id),
+    company_id: int | None = Depends(get_company_id),
     session: AsyncSession = Depends(get_session),
     employee_repo: EmployeeRepository = Depends(get_employee_repo),
 ):
+    if company_id is None:
+        raise HTTPException(status_code=401, detail="You do not have a company yet")
     return await EmployeeService.list_employees(session, employee_repo, company_id)
 
 
@@ -42,11 +44,13 @@ async def list_employees(
 )
 async def create_employee(
     employee: EmployeeCreate,
-    company_id: int = Depends(get_company_id),
+    company_id: int | None = Depends(get_company_id),
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
     employee_repo: EmployeeRepository = Depends(get_employee_repo),
 ):
+    if company_id is None:
+        raise HTTPException(status_code=401, detail="You do not have a company yet")
     return await EmployeeService.create_employee(session, redis, employee_repo, employee, company_id)
 
 
@@ -63,11 +67,13 @@ async def create_employee(
 )
 async def get_employee(
     employee_id: int,
-    company_id: int = Depends(get_company_id),
+    company_id: int | None = Depends(get_company_id),
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
     employee_repo: EmployeeRepository = Depends(get_employee_repo),
 ):
+    if company_id is None:
+        raise HTTPException(status_code=401, detail="You do not have a company yet")
     return await EmployeeService.get_employee(session, redis, employee_repo, employee_id, company_id)
 
 
@@ -85,11 +91,13 @@ async def get_employee(
 async def update_employee(
     employee_id: int,
     employee_data: EmployeeUpdate,
-    company_id: int = Depends(get_company_id),
+    company_id: int | None = Depends(get_company_id),
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
     employee_repo: EmployeeRepository = Depends(get_employee_repo),
 ):
+    if company_id is None:
+        raise HTTPException(status_code=401, detail="You do not have a company yet")
     return await EmployeeService.update_employee(session, redis, employee_repo, employee_id, employee_data, company_id)
 
 
@@ -106,9 +114,11 @@ async def update_employee(
 )
 async def dismiss_employees(
     employee_ids: list[int] = Body(..., description="Список id сотрудников для увольнения"),
-    company_id: int = Depends(get_company_id),
+    company_id: int | None = Depends(get_company_id),
     session: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis),
     employee_repo: EmployeeRepository = Depends(get_employee_repo),
 ):
+    if company_id is None:
+        raise HTTPException(status_code=401, detail="You do not have a company yet")
     return await EmployeeService.dismiss_employees(session, redis, employee_repo, employee_ids, company_id)

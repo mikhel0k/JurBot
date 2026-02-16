@@ -75,6 +75,7 @@ async def confirm_registration(session: AsyncSession, redis: Redis, user_repo: U
     user = UserResponse.model_validate(user_in_db)
     access_token = create_token({"sub": str(user.id), "company_id": None})
     refresh_token = create_token({"sub": str(user.id)}, duration=REFRESH_TOKEN_DURATION_MIN)
+    await redis.set(f"{user.id}_refresh_token", refresh_token, ex=60 * 60 * 24 * 30)
     await session.commit()
     logger.info("User registered id=%s", user.id)
     return access_token, refresh_token
@@ -142,9 +143,12 @@ async def confirm_login(session: AsyncSession, redis: Redis, company_repo: Compa
 
 
 async def refresh_access_token(
-    session: AsyncSession, company_repo: CompanyRepository, refresh_token: str
+    session: AsyncSession,
+    company_repo: CompanyRepository,
+    redis: Redis,
+    refresh_token: str,
 ) -> str:
-    """По валидному refresh-токену выдаёт новый access-токен. При невалидном/истёкшем — 401."""
+    """По валидному refresh-токену выдаёт новый access-токен. Проверяет, что токен не инвалидирован (logout)."""
     try:
         payload = decode_token(refresh_token)
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
@@ -154,6 +158,10 @@ async def refresh_access_token(
         user_id = int(payload["sub"])
     except (KeyError, ValueError, TypeError):
         logger.warning("Refresh failed: invalid payload")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    stored = await redis.get(f"{user_id}_refresh_token")
+    if stored is None or stored != refresh_token:
+        logger.warning("Refresh failed: token invalidated (logout or re-login)")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     company_in_db = await company_repo.get_by_user_id(session, user_id)
     company_id = company_in_db.id if company_in_db else None

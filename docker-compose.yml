@@ -1,0 +1,116 @@
+# Запуск всего приложения: docker compose up --build
+# Переменные окружения читаются из .env в корне проекта.
+# Если .env нет — скопируйте: cp backend/.env .env
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: jurbot_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-jurbot}
+      POSTGRES_USER: ${POSTGRES_USER:-jurbot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jurbot}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: jurbot_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  mongo:
+    image: mongo:7
+    container_name: jurbot_mongo
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jurbot_backend
+    env_file:
+      - ./backend/.env
+    environment:
+      # Подключение к контейнеру postgres (те же учётные данные, что у сервиса postgres)
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-jurbot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jurbot}
+      POSTGRES_DB: ${POSTGRES_DB:-jurbot}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      # В Docker обращаемся к ai-chat по имени контейнера (надёжнее резолвится в сети)
+      AI_CHAT_SERVICE_URL: "http://jurbot_ai_chat:8001"
+    volumes:
+      - ./backend/jwt_tokens:/app/jwt_tokens:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-chat-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app_network
+
+  ai-chat-service:
+    build:
+      context: ./ai-chat-service
+      dockerfile: Dockerfile
+    container_name: jurbot_ai_chat
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: ${MONGO_DB:-jurbot}
+      API_TOKEN: ${API_TOKEN:-}
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8001:8001"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - app_network
+
+volumes:
+  redis_data:
+
+networks:
+  app_network:
+    driver: bridge

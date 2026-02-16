@@ -151,6 +151,32 @@ pip install pytest-cov
 PYTHONPATH=. pytest tests/ -v --cov=app
 ```
 
+## Запуск всего приложения в Docker (docker compose)
+
+Из корня проекта можно поднять все сервисы в контейнерах (PostgreSQL, Redis, MongoDB, backend, ai-chat-service). При старте backend автоматически выполняются миграции Alembic.
+
+**Требования:** папка `backend/jwt_tokens/` с ключами JWT (см. раздел про JWT-ключи). Переменные окружения для контейнеров берутся из **`.env` в корне проекта** (Docker Compose читает только его). Удобно скопировать из backend: `cp backend/.env .env`. Если `.env` в корне нет, будут использованы значения по умолчанию (пароль БД: `jurbot`).
+
+```bash
+cd JurBot
+cp backend/.env .env   # если ещё не копировали
+docker compose up --build
+```
+
+- **Backend API:** http://localhost:8000 (документация: /docs)
+- **AI Chat Service:** http://localhost:8001
+
+Остановка: `docker compose down`. Данные Redis сохраняются в volume `redis_data`.
+
+**Если в браузере не открывается:**
+
+1. Проверьте, что контейнеры запущены: `docker compose ps`. У `jurbot_backend` и `jurbot_ai_chat` должно быть состояние `Up` (не `Restarting` и не `Exited`).
+2. Посмотрите логи backend: `docker compose logs backend --tail 80`. Частые причины падения:
+   - **JWT-ключи не найдены** — в `backend/jwt_tokens/` должны лежать файлы `jwt-private.pem` и `jwt-public.pem` (см. раздел «JWT-ключи» выше).
+   - **Нет переменной API_TOKEN** — в `backend/.env` должна быть строка `API_TOKEN=...` (можно пустое значение для проверки, если код это допускает).
+3. Логи ai-chat: `docker compose logs ai-chat-service --tail 50`.
+4. После исправления перезапустите: `docker compose up -d --build`.
+
 ## Основные эндпоинты
 
 | Путь | Описание |
