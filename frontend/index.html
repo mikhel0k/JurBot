@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Войти в аккаунт</title>
+    <link rel="stylesheet" href="styles1.css">
+</head>
+<body>
+    <main class="page">
+        <section class="form-container">
+            <h1 class="form-title">Войти в аккаунт</h1>
+
+            <form class="form" action="#" method="post">
+                <label class="label" for="phone">Введите номер телефона</label>
+                <input
+                    class="input"
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    placeholder="+7 (999) 123-45-67"
+                    autocomplete="tel"
+                    data-inputmask="'mask': '+7 (999) 999-99-99'"
+                >
+
+                <label class="label" for="password">Введите пароль</label>
+                <input
+                    class="input"
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Минимум 8 символов"
+                    autocomplete="current-password"
+                >
+
+                <button class="button" type="submit">Продолжить</button>
+            </form>
+
+            <p class="register-text">
+                Еще нет аккаунта? <a class="register-link" href="register-step1.html">Зарегестрироваться</a>
+            </p>
+        </section>
+    </main>
+</body>
+</html>

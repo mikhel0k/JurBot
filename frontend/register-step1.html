@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шаг 1: введите свои данные</title>
+    <link rel="stylesheet" href="styles1.css">
+</head>
+<body>
+    <main class="page">
+        <section class="form-container">
+            <header class="form-header">
+                <a class="back-link" href="index.html" aria-label="Назад">
+                    <img src="images/Vector.svg" alt="" class="back-icon">
+                </a>
+                <h1 class="form-header-title">Шаг 1: введите свои данные</h1>
+            </header>
+
+            <form class="form" action="register-step2.html" method="get">
+                <label class="label" for="phone">Номер телефона</label>
+                <input
+                    class="input"
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    ="+7 (__) ___ -__-__"
+                    autocomplete="tel"
+                >
+
+                <label class="label" for="fio">ФИО</label>
+                <input
+                    class="input"
+                    type="text"
+                    id="fio"
+                    name="fio"
+                    placeholder="Иванов Иван Иванович"
+                    autocomplete="name"
+                >
+
+                <label class="label" for="password">Придумайте пароль</label>
+                <div class="input-wrap">
+                    <input
+                        class="input input-with-icon"
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Минимум 8 символов"
+                        autocomplete="new-password"
+                    >
+                    <button type="button" class="toggle-password" aria-label="Показать пароль">
+                        <img src="images/eye.svg" alt="" class="icon-eye">
+                    </button>
+                </div>
+                <p class="form-hint">* Минимум 8 символов, хотя бы одна буква и цифра.</p>
+
+                <div class="button-wrap">
+                    <button class="button" type="submit">Продолжить</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
