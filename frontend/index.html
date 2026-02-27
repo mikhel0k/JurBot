@@ -11,7 +11,18 @@
         <section class="form-container">
             <h1 class="form-title">Войти в аккаунт</h1>
 
-            <form class="form" action="#" method="post">
+            <form class="form" id="login-form">
+                <label class="label" for="email">Email</label>
+                <input
+                    class="input"
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="user@example.com"
+                    autocomplete="email"
+                    required
+                >
+
                 <label class="label" for="phone">Введите номер телефона</label>
                 <input
                     class="input"
@@ -20,7 +31,6 @@
                     name="phone"
                     placeholder="+7 (999) 123-45-67"
                     autocomplete="tel"
-                    data-inputmask="'mask': '+7 (999) 999-99-99'"
                 >
 
                 <label class="label" for="password">Введите пароль</label>
@@ -31,9 +41,11 @@
                     name="password"
                     placeholder="Минимум 8 символов"
                     autocomplete="current-password"
+                    required
                 >
 
                 <button class="button" type="submit">Продолжить</button>
+                <p class="form-hint" id="login-message" aria-live="polite"></p>
             </form>
 
             <p class="register-text">
@@ -41,5 +53,60 @@
             </p>
         </section>
     </main>
+
+    <script>
+        (function () {
+            const form = document.getElementById('login-form');
+            const messageEl = document.getElementById('login-message');
+
+            if (!form) {
+                return;
+            }
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                messageEl.textContent = '';
+
+                const formData = new FormData(form);
+                const payload = {
+                    email: (formData.get('email') || '').toString().trim(),
+                    password: (formData.get('password') || '').toString(),
+                    phone_number: (formData.get('phone') || '').toString().trim(),
+                };
+
+                if (!payload.email || !payload.password) {
+                    messageEl.textContent = 'Введите email и пароль.';
+                    return;
+                }
+
+                try {
+                    const response = await fetch('http://localhost:8000/v1/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        messageEl.textContent = errorData.detail || 'Ошибка входа. Попробуйте ещё раз.';
+                        return;
+                    }
+
+                    const data = await response.json().catch(() => ({}));
+                    if (data && data.jti) {
+                        messageEl.textContent = 'Код отправлен на email. Проверьте почту.';
+                    } else {
+                        messageEl.textContent = 'Данные отправлены на сервер.';
+                    }
+                } catch (error) {
+                    console.error(error);
+                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

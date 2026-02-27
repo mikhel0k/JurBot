@@ -16,7 +16,7 @@
                 <h1 class="form-header-title">Шаг 2: введите данные вашей организации</h1>
             </header>
 
-            <form class="form form--two-cols" action="#" method="post">
+            <form class="form form--two-cols" id="company-form">
                 <div class="form-group">
                     <label class="label" for="name">Название</label>
                     <input
@@ -25,6 +25,7 @@
                         id="name"
                         name="name"
                         placeholder="Название вашей организации"
+                        required
                     >
                 </div>
                 <div class="form-group">
@@ -35,6 +36,7 @@
                         id="address"
                         name="address"
                         placeholder="Адрес регистрации организации"
+                        required
                     >
                 </div>
                 <div class="form-group">
@@ -44,7 +46,19 @@
                         type="text"
                         id="inn"
                         name="inn"
-                        placeholder="83746253475"
+                        placeholder="7707083893"
+                        required
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="label" for="snils">СНИЛС</label>
+                    <input
+                        class="input"
+                        type="text"
+                        id="snils"
+                        name="snils"
+                        placeholder="12345678901"
+                        required
                     >
                 </div>
                 <div class="form-group">
@@ -54,7 +68,7 @@
                         type="text"
                         id="bank"
                         name="bank"
-                        placeholder="356"
+                        placeholder="БИК, расчётный счёт и т.п."
                     >
                 </div>
                 <div class="form-group">
@@ -64,7 +78,7 @@
                         type="text"
                         id="ogrn"
                         name="ogrn"
-                        placeholder="37463829465738"
+                        placeholder="3746382946573"
                     >
                 </div>
                 <div class="form-group">
@@ -82,8 +96,65 @@
                     <a href="#" class="button button--secondary">Пропустить</a>
                     <button class="button" type="submit">Продолжить</button>
                 </div>
+                <p class="form-hint" id="company-message" aria-live="polite"></p>
             </form>
         </section>
     </main>
+
+    <script>
+        (function () {
+            const form = document.getElementById('company-form');
+            const messageEl = document.getElementById('company-message');
+
+            if (!form) {
+                return;
+            }
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                messageEl.textContent = '';
+
+                const formData = new FormData(form);
+                const payload = {
+                    name: (formData.get('name') || '').toString().trim(),
+                    inn: (formData.get('inn') || '').toString().trim(),
+                    snils: (formData.get('snils') || '').toString().trim(),
+                    address: (formData.get('address') || '').toString().trim(),
+                    bank: (formData.get('bank') || '').toString().trim(),
+                    ogrn: (formData.get('ogrn') || '').toString().trim(),
+                    activity: (formData.get('activity') || '').toString().trim(),
+                };
+
+                if (!payload.name || !payload.inn || !payload.snils || !payload.address) {
+                    messageEl.textContent = 'Заполните обязательные поля: название, адрес, ИНН, СНИЛС.';
+                    return;
+                }
+
+                try {
+                    const response = await fetch('http://localhost:8000/v1/company/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        messageEl.textContent = errorData.detail || 'Ошибка при сохранении компании.';
+                        return;
+                    }
+
+                    messageEl.textContent = 'Данные компании отправлены на сервер.';
+                    // После успешного создания компании можно перейти на главную страницу
+                    // window.location.href = 'main.html';
+                } catch (error) {
+                    console.error(error);
+                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

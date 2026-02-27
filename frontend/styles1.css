@@ -135,6 +135,21 @@ body {
     flex-shrink: 0;
 }
 
+.back-link--with-text {
+    width: auto;
+    gap: 8px;
+    font-size: 16px;
+}
+
+.back-text {
+    font-size: 24px;
+    color: #ffffff;
+}
+
+.back-link--with-text:hover .back-text {
+    color: rgba(255, 255, 255, 0.85);
+}
+
 /* .back-link:hover {
     opacity: 0.85;
 } */
@@ -232,6 +247,50 @@ body {
 .form--two-cols .form-group:first-child .label,
 .form--two-cols .form-group:nth-child(2) .label {
     margin-top: 0;
+}
+
+.form-group--full {
+    grid-column: 1 / -1;
+}
+
+.form-group .form-group--full {
+    margin-top: 0;
+}
+
+/* Checkbox & Radio (add-employee) */
+.checkbox-label,
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.95);
+    margin-top: 8px;
+}
+
+.input-checkbox,
+.input-radio {
+    width: 20px;
+    height: 20px;
+    accent-color: #FDC742;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.buttons-row--single {
+    justify-content: stretch;
+}
+
+.button--full {
+    width: 100%;
 }
 
 .buttons-row {

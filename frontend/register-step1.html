@@ -16,15 +16,27 @@
                 <h1 class="form-header-title">Шаг 1: введите свои данные</h1>
             </header>
 
-            <form class="form" action="register-step2.html" method="get">
+            <form class="form" id="register-form">
+                <label class="label" for="email">Email</label>
+                <input
+                    class="input"
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="user@example.com"
+                    autocomplete="email"
+                    required
+                >
+
                 <label class="label" for="phone">Номер телефона</label>
                 <input
                     class="input"
                     type="tel"
                     id="phone"
                     name="phone"
-                    ="+7 (__) ___ -__-__"
+                    placeholder="+7 (__) ___-__-__"
                     autocomplete="tel"
+                    required
                 >
 
                 <label class="label" for="fio">ФИО</label>
@@ -35,6 +47,7 @@
                     name="fio"
                     placeholder="Иванов Иван Иванович"
                     autocomplete="name"
+                    required
                 >
 
                 <label class="label" for="password">Придумайте пароль</label>
@@ -46,6 +59,7 @@
                         name="password"
                         placeholder="Минимум 8 символов"
                         autocomplete="new-password"
+                        required
                     >
                     <button type="button" class="toggle-password" aria-label="Показать пароль">
                         <img src="images/eye.svg" alt="" class="icon-eye">
@@ -56,8 +70,79 @@
                 <div class="button-wrap">
                     <button class="button" type="submit">Продолжить</button>
                 </div>
+                <p class="form-hint" id="register-message" aria-live="polite"></p>
             </form>
         </section>
     </main>
+
+    <script>
+        (function () {
+            const form = document.getElementById('register-form');
+            const messageEl = document.getElementById('register-message');
+
+            if (!form) {
+                return;
+            }
+
+            const passwordInput = document.getElementById('password');
+            const togglePasswordBtn = document.querySelector('.toggle-password');
+
+            if (togglePasswordBtn && passwordInput) {
+                togglePasswordBtn.addEventListener('click', () => {
+                    const isHidden = passwordInput.type === 'password';
+                    passwordInput.type = isHidden ? 'text' : 'password';
+                    togglePasswordBtn.setAttribute('aria-label', isHidden ? 'Скрыть пароль' : 'Показать пароль');
+                });
+            }
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                messageEl.textContent = '';
+
+                const formData = new FormData(form);
+                const payload = {
+                    email: (formData.get('email') || '').toString().trim(),
+                    phone_number: (formData.get('phone') || '').toString().trim(),
+                    full_name: (formData.get('fio') || '').toString().trim(),
+                    password: (formData.get('password') || '').toString(),
+                };
+
+                if (!payload.email || !payload.phone_number || !payload.full_name || !payload.password) {
+                    messageEl.textContent = 'Заполните все поля формы.';
+                    return;
+                }
+
+                try {
+                    const response = await fetch('http://localhost:8000/v1/auth/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        messageEl.textContent = errorData.detail || 'Ошибка регистрации. Попробуйте ещё раз.';
+                        return;
+                    }
+
+                    const data = await response.json().catch(() => ({}));
+                    if (data && data.jti) {
+                        messageEl.textContent = 'Код для подтверждения регистрации отправлен на email.';
+                    } else {
+                        messageEl.textContent = 'Данные отправлены на сервер.';
+                    }
+
+                    // Переход на второй шаг после успешной отправки
+                    window.location.href = 'register-step2.html';
+                } catch (error) {
+                    console.error(error);
+                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
