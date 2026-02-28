@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class ChatMessageIn(BaseModel):
     message: str
+    chat_id: str | None = None  # если нет — создаётся новый чат
 
 
 class ChatMessageOut(BaseModel):
@@ -25,7 +26,8 @@ class HistoryPaginatedOut(BaseModel):
 
 
 class ConversationItem(BaseModel):
-    user_id: int
+    chat_id: str
+    created_at: datetime | None = None
     updated_at: datetime | None = None
     message_count: int
 
