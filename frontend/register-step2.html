@@ -10,7 +10,7 @@
     <main class="page page--wide">
         <section class="form-container">
             <header class="form-header">
-                <a class="back-link" href="register-step1.html" aria-label="Назад">
+                <a class="back-link" href="register-confirm.html" aria-label="Назад">
                     <img src="images/Vector.svg" alt="" class="back-icon">
                 </a>
                 <h1 class="form-header-title">Шаг 2: введите данные вашей организации</h1>
@@ -61,36 +61,6 @@
                         required
                     >
                 </div>
-                <div class="form-group">
-                    <label class="label" for="bank">Банковские реквезиты</label>
-                    <input
-                        class="input"
-                        type="text"
-                        id="bank"
-                        name="bank"
-                        placeholder="БИК, расчётный счёт и т.п."
-                    >
-                </div>
-                <div class="form-group">
-                    <label class="label" for="ogrn">ОГРН</label>
-                    <input
-                        class="input"
-                        type="text"
-                        id="ogrn"
-                        name="ogrn"
-                        placeholder="3746382946573"
-                    >
-                </div>
-                <div class="form-group">
-                    <label class="label" for="activity">Вид деятельности</label>
-                    <input
-                        class="input"
-                        type="text"
-                        id="activity"
-                        name="activity"
-                        placeholder="Разработка программного обеспечения"
-                    >
-                </div>
 
                 <div class="buttons-row">
                     <a href="#" class="button button--secondary">Пропустить</a>
@@ -115,14 +85,12 @@
                 messageEl.textContent = '';
 
                 const formData = new FormData(form);
+                // API POST /v1/company/ принимает только name, inn, snils, address
                 const payload = {
                     name: (formData.get('name') || '').toString().trim(),
                     inn: (formData.get('inn') || '').toString().trim(),
                     snils: (formData.get('snils') || '').toString().trim(),
                     address: (formData.get('address') || '').toString().trim(),
-                    bank: (formData.get('bank') || '').toString().trim(),
-                    ogrn: (formData.get('ogrn') || '').toString().trim(),
-                    activity: (formData.get('activity') || '').toString().trim(),
                 };
 
                 if (!payload.name || !payload.inn || !payload.snils || !payload.address) {
@@ -142,13 +110,13 @@
 
                     if (!response.ok) {
                         const errorData = await response.json().catch(() => ({}));
-                        messageEl.textContent = errorData.detail || 'Ошибка при сохранении компании.';
+                        const detail = Array.isArray(errorData.detail) ? errorData.detail.map(d => d.msg || d).join('. ') : (errorData.detail || '');
+                        messageEl.textContent = detail || 'Ошибка при сохранении компании.';
                         return;
                     }
 
-                    messageEl.textContent = 'Данные компании отправлены на сервер.';
-                    // После успешного создания компании можно перейти на главную страницу
-                    // window.location.href = 'main.html';
+                    messageEl.textContent = 'Компания создана.';
+                    window.location.href = 'main.html';
                 } catch (error) {
                     console.error(error);
                     messageEl.textContent = 'Не удалось связаться с сервером.';

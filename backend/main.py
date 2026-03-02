@@ -63,8 +63,18 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS: для фронта на другом origin задайте CORS_ORIGINS в .env (через запятую, например http://localhost:3000).
-_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+# CORS: задайте CORS_ORIGINS в .env (через запятую). При пустом значении разрешаем null и localhost для локальной разработки.
+_default_origins = [
+    "null",  # страница открыта по file://
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
+_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()] or _default_origins
+logger.info("CORS allow_origins: %s", _origins)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,

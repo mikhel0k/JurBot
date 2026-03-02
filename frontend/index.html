@@ -23,16 +23,6 @@
                     required
                 >
 
-                <label class="label" for="phone">Введите номер телефона</label>
-                <input
-                    class="input"
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    placeholder="+7 (999) 123-45-67"
-                    autocomplete="tel"
-                >
-
                 <label class="label" for="password">Введите пароль</label>
                 <input
                     class="input"
@@ -68,10 +58,10 @@
                 messageEl.textContent = '';
 
                 const formData = new FormData(form);
+                // API /v1/auth/login принимает только email и password
                 const payload = {
                     email: (formData.get('email') || '').toString().trim(),
                     password: (formData.get('password') || '').toString(),
-                    phone_number: (formData.get('phone') || '').toString().trim(),
                 };
 
                 if (!payload.email || !payload.password) {
@@ -91,15 +81,18 @@
 
                     if (!response.ok) {
                         const errorData = await response.json().catch(() => ({}));
-                        messageEl.textContent = errorData.detail || 'Ошибка входа. Попробуйте ещё раз.';
+                        const detail = Array.isArray(errorData.detail) ? errorData.detail.map(d => d.msg || d).join('. ') : (errorData.detail || '');
+                        messageEl.textContent = detail || 'Ошибка входа. Попробуйте ещё раз.';
                         return;
                     }
 
                     const data = await response.json().catch(() => ({}));
                     if (data && data.jti) {
+                        sessionStorage.setItem('login_jti', data.jti);
                         messageEl.textContent = 'Код отправлен на email. Проверьте почту.';
+                        window.location.href = 'login-confirm.html';
                     } else {
-                        messageEl.textContent = 'Данные отправлены на сервер.';
+                        messageEl.textContent = 'Неожиданный ответ сервера.';
                     }
                 } catch (error) {
                     console.error(error);

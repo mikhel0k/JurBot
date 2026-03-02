@@ -35,7 +35,41 @@ JurBot/
 - Docker и Docker Compose (для PostgreSQL и Redis)
 - Gmail-аккаунт для отправки кодов (или настройка SMTP)
 
-## Быстрый старт
+## Запуск одной командой (Docker)
+
+Из **корня проекта** (JurBot/) поднимаются все сервисы: PostgreSQL, Redis, MongoDB, backend (при старте сам выполняет **Alembic** — `alembic upgrade head` — и поднимает API), ai-chat. Отдельно сервер и миграции запускать не нужно.
+
+**Первый раз** (сборка образов и создание ключей JWT при необходимости):
+
+```bash
+cd JurBot
+cp backend/.env.example backend/.env   # заполнить при необходимости
+mkdir -p backend/jwt_tokens
+# сгенерировать ключи, если ещё нет:
+# openssl genrsa -out backend/jwt_tokens/jwt-private.pem 2048
+# openssl rsa -in backend/jwt_tokens/jwt-private.pem -pubout -out backend/jwt_tokens/jwt-public.pem
+docker compose up -d --build
+```
+
+**Дальше** — только:
+
+```bash
+docker compose up -d
+```
+
+Или из корня проекта: `./up.sh` (поднимает всё с пересборкой при необходимости).
+
+- **API:** http://localhost:8000 (документация: /docs)
+- **AI Chat:** http://localhost:8001
+
+Остановка: `docker compose down`.
+
+Миграции вручную (если нужно, например для новой ревизии):  
+`docker compose run --rm backend alembic upgrade head`
+
+---
+
+## Быстрый старт (разработка без Docker)
 
 ### 1. Клонирование и настройка окружения
 
@@ -151,22 +185,9 @@ pip install pytest-cov
 PYTHONPATH=. pytest tests/ -v --cov=app
 ```
 
-## Запуск всего приложения в Docker (docker compose)
+## Запуск всего в Docker (подробнее)
 
-Из корня проекта можно поднять все сервисы в контейнерах (PostgreSQL, Redis, MongoDB, backend, ai-chat-service). При старте backend автоматически выполняются миграции Alembic.
-
-**Требования:** папка `backend/jwt_tokens/` с ключами JWT (см. раздел про JWT-ключи). Переменные окружения для контейнеров берутся из **`.env` в корне проекта** (Docker Compose читает только его). Удобно скопировать из backend: `cp backend/.env .env`. Если `.env` в корне нет, будут использованы значения по умолчанию (пароль БД: `jurbot`).
-
-```bash
-cd JurBot
-cp backend/.env .env   # если ещё не копировали
-docker compose up --build
-```
-
-- **Backend API:** http://localhost:8000 (документация: /docs)
-- **AI Chat Service:** http://localhost:8001
-
-Остановка: `docker compose down`. Данные Redis сохраняются в volume `redis_data`.
+Compose читает `backend/.env` (и при необходимости можно скопировать в корень: `cp backend/.env .env`). Переменные для контейнеров (POSTGRES_HOST, REDIS_HOST и т.д.) задаются в `docker-compose.yml`. Для работы backend нужна папка `backend/jwt_tokens/` с ключами JWT (см. раздел про JWT-ключи выше).
 
 **Если в браузере не открывается:**
 

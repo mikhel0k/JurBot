@@ -1,5 +1,5 @@
 """Прокси запросов чата в AI-микросервис. Требует аутентификации (cookies)."""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 import httpx
@@ -13,6 +13,7 @@ _BASE = f"{settings.AI_CHAT_SERVICE_URL.rstrip('/')}/ai_chat/v1/chat"
 
 class ChatMessageIn(BaseModel):
     message: str
+    chat_id: str | None = None
 
 
 def _headers(user_id: int) -> dict[str, str]:
@@ -25,9 +26,12 @@ async def chat(
     user_id: int = Depends(get_user_id),
 ):
     url = f"{_BASE}"
+    payload = {"message": body.message}
+    if body.chat_id is not None:
+        payload["chat_id"] = body.chat_id
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
-            r = await client.post(url, json={"message": body.message}, headers=_headers(user_id))
+            r = await client.post(url, json=payload, headers=_headers(user_id))
             r.raise_for_status()
             return r.json()
         except httpx.ConnectError:
@@ -39,14 +43,16 @@ async def chat(
 @router.get("/history", summary="История переписки с пагинацией")
 async def get_chat_history(
     user_id: int = Depends(get_user_id),
+    chat_id: str = Query(..., description="ID чата"),
     page: int = 1,
     page_size: int = 20,
 ):
-    """Возвращает историю сообщений текущего пользователя (items, total, page, page_size)."""
+    """Возвращает историю сообщений в указанном чате (items, total, page, page_size)."""
     url = f"{_BASE}/history"
+    params = {"chat_id": chat_id, "page": page, "page_size": page_size}
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
-            r = await client.get(url, params={"page": page, "page_size": page_size}, headers=_headers(user_id))
+            r = await client.get(url, params=params, headers=_headers(user_id))
             r.raise_for_status()
             return r.json()
         except httpx.ConnectError:
@@ -61,7 +67,7 @@ async def get_conversations(
     page: int = 1,
     page_size: int = 20,
 ):
-    """Возвращает список всех чатов (user_id, updated_at, message_count) с пагинацией."""
+    """Возвращает список чатов только текущего пользователя (chat_id, updated_at, message_count) с пагинацией."""
     url = f"{_BASE}/conversations"
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:

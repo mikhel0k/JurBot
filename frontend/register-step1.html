@@ -102,9 +102,9 @@
                 const formData = new FormData(form);
                 const payload = {
                     email: (formData.get('email') || '').toString().trim(),
-                    phone_number: (formData.get('phone') || '').toString().trim(),
                     full_name: (formData.get('fio') || '').toString().trim(),
                     password: (formData.get('password') || '').toString(),
+                    phone_number: (formData.get('phone') || '').toString().trim(),
                 };
 
                 if (!payload.email || !payload.phone_number || !payload.full_name || !payload.password) {
@@ -124,19 +124,19 @@
 
                     if (!response.ok) {
                         const errorData = await response.json().catch(() => ({}));
-                        messageEl.textContent = errorData.detail || 'Ошибка регистрации. Попробуйте ещё раз.';
+                        const detail = Array.isArray(errorData.detail) ? errorData.detail.map(d => d.msg || d).join('. ') : (errorData.detail || '');
+                        messageEl.textContent = detail || 'Ошибка регистрации. Попробуйте ещё раз.';
                         return;
                     }
 
                     const data = await response.json().catch(() => ({}));
                     if (data && data.jti) {
+                        sessionStorage.setItem('register_jti', data.jti);
                         messageEl.textContent = 'Код для подтверждения регистрации отправлен на email.';
+                        window.location.href = 'register-confirm.html';
                     } else {
-                        messageEl.textContent = 'Данные отправлены на сервер.';
+                        messageEl.textContent = 'Неожиданный ответ сервера.';
                     }
-
-                    // Переход на второй шаг после успешной отправки
-                    window.location.href = 'register-step2.html';
                 } catch (error) {
                     console.error(error);
                     messageEl.textContent = 'Не удалось связаться с сервером.';
