@@ -330,3 +330,36 @@ body {
     transform: scale(0.98);
 }
 
+/* employee cards (profile column + возможные другие страницы) */
+.employee-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.employee-card {
+    padding: 16px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+.employee-card__name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+
+.employee-card__meta {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+    .form--two-cols {
+        grid-template-columns: 1fr;
+    }
+}
+

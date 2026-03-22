@@ -65,7 +65,7 @@
                         <img src="images/eye.svg" alt="" class="icon-eye">
                     </button>
                 </div>
-                <p class="form-hint">* Минимум 8 символов, хотя бы одна буква и цифра.</p>
+                <p class="form-hint">* Телефон: +7 и 10 цифр (например +79509921704) или 11 цифр с 8. Пароль: минимум 8 символов, буква и цифра.</p>
 
                 <div class="button-wrap">
                     <button class="button" type="submit">Продолжить</button>
@@ -75,8 +75,19 @@
         </section>
     </main>
 
+    <script src="api-config.js"></script>
     <script>
         (function () {
+            function normalizePhoneForApi(raw) {
+                var s = String(raw).trim().replace(/[\s()-]/g, '');
+                if (!s) return '';
+                if (/^\+7\d{10}$/.test(s)) return s;
+                if (/^8\d{10}$/.test(s)) return '+7' + s.slice(1);
+                if (/^7\d{10}$/.test(s)) return '+' + s;
+                if (/^\d{10}$/.test(s)) return '+7' + s;
+                return s;
+            }
+
             const form = document.getElementById('register-form');
             const messageEl = document.getElementById('register-message');
 
@@ -104,7 +115,7 @@
                     email: (formData.get('email') || '').toString().trim(),
                     full_name: (formData.get('fio') || '').toString().trim(),
                     password: (formData.get('password') || '').toString(),
-                    phone_number: (formData.get('phone') || '').toString().trim(),
+                    phone_number: normalizePhoneForApi((formData.get('phone') || '').toString()),
                 };
 
                 if (!payload.email || !payload.phone_number || !payload.full_name || !payload.password) {
@@ -113,12 +124,12 @@
                 }
 
                 try {
-                    const response = await fetch('http://localhost:8000/v1/auth/register', {
+                    const response = await fetch((window.API_BASE || 'http://localhost:8000') + '/v1/auth/register', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        credentials: 'include',
+                        credentials: 'omit',
                         body: JSON.stringify(payload),
                     });
 
@@ -132,6 +143,7 @@
                     const data = await response.json().catch(() => ({}));
                     if (data && data.jti) {
                         sessionStorage.setItem('register_jti', data.jti);
+                        sessionStorage.setItem('cabinet_user_email', payload.email);
                         messageEl.textContent = 'Код для подтверждения регистрации отправлен на email.';
                         window.location.href = 'register-confirm.html';
                     } else {

@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Шаг 2: введите данные вашей организации</title>
+    <title>Настройки организации</title>
     <link rel="stylesheet" href="styles1.css">
 </head>
 <body>
     <main class="page page--wide">
         <section class="form-container">
             <header class="form-header">
-                <a class="back-link" href="register-confirm.html" aria-label="Назад">
+                <a class="back-link" href="profile.html" aria-label="Назад">
                     <img src="images/Vector.svg" alt="" class="back-icon">
                 </a>
-                <h1 class="form-header-title">Шаг 2: введите данные вашей организации</h1>
+                <h1 class="form-header-title">Настройки организации</h1>
             </header>
 
-            <form class="form form--two-cols" id="company-form">
+            <form class="form form--two-cols" id="company-settings-form">
                 <div class="form-group">
                     <label class="label" for="name">Название</label>
                     <input
@@ -48,6 +48,7 @@
                         name="inn"
                         placeholder="7707083893"
                         required
+                        maxlength="10"
                     >
                 </div>
                 <div class="form-group">
@@ -59,12 +60,13 @@
                         name="snils"
                         placeholder="12345678901"
                         required
+                        maxlength="11"
                     >
                 </div>
 
                 <div class="buttons-row">
-                    <a href="profile.html" class="button button--secondary">Пропустить</a>
-                    <button class="button" type="submit">Продолжить</button>
+                    <a href="profile.html" class="button button--secondary">Назад</a>
+                    <button class="button" type="submit">Сохранить</button>
                 </div>
                 <p class="form-hint" id="company-message" aria-live="polite"></p>
             </form>
@@ -74,20 +76,44 @@
     <script src="api-config.js"></script>
     <script>
         (function () {
-            const form = document.getElementById('company-form');
+            const form = document.getElementById('company-settings-form');
             const messageEl = document.getElementById('company-message');
+            const base = window.API_BASE || 'http://localhost:8000';
 
-            if (!form) {
-                return;
-            }
+            if (!form) return;
 
-            form.addEventListener('submit', async (event) => {
+            (async function loadCompany() {
+                try {
+                    const response = await fetch(base + '/v1/company/', { credentials: 'include' });
+                    if (response.status === 401) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    if (response.status === 404) {
+                        window.location.href = 'register-step2.html';
+                        return;
+                    }
+                    if (!response.ok) {
+                        messageEl.textContent = 'Не удалось загрузить данные организации.';
+                        return;
+                    }
+                    const data = await response.json();
+                    document.getElementById('name').value = data.name || '';
+                    document.getElementById('address').value = data.address || '';
+                    document.getElementById('inn').value = data.inn || '';
+                    document.getElementById('snils').value = data.snils || '';
+                } catch (e) {
+                    console.error(e);
+                    messageEl.textContent = 'Ошибка сети при загрузке.';
+                }
+            })();
+
+            form.addEventListener('submit', async function (event) {
                 event.preventDefault();
                 messageEl.textContent = '';
 
                 const formData = new FormData(form);
-                // API POST /v1/company/ принимает только name, inn, snils, address
-                const payload = {
+                var payload = {
                     name: (formData.get('name') || '').toString().trim(),
                     inn: (formData.get('inn') || '').toString().trim(),
                     snils: (formData.get('snils') || '').toString().trim(),
@@ -95,29 +121,31 @@
                 };
 
                 if (!payload.name || !payload.inn || !payload.snils || !payload.address) {
-                    messageEl.textContent = 'Заполните обязательные поля: название, адрес, ИНН, СНИЛС.';
+                    messageEl.textContent = 'Заполните все поля: название, адрес, ИНН, СНИЛС.';
                     return;
                 }
 
                 try {
-                    const response = await fetch((window.API_BASE || 'http://localhost:8000') + '/v1/company/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                    const response = await fetch(base + '/v1/company/', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
                         body: JSON.stringify(payload),
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        const detail = Array.isArray(errorData.detail) ? errorData.detail.map(d => d.msg || d).join('. ') : (errorData.detail || '');
-                        messageEl.textContent = detail || 'Ошибка при сохранении компании.';
+                        const errorData = await response.json().catch(function () { return {}; });
+                        var detail = Array.isArray(errorData.detail)
+                            ? errorData.detail.map(function (d) { return d.msg || d; }).join('. ')
+                            : (errorData.detail || '');
+                        messageEl.textContent = detail || 'Ошибка при сохранении.';
                         return;
                     }
 
-                    messageEl.textContent = 'Компания создана.';
-                    window.location.href = 'profile.html';
+                    messageEl.textContent = 'Изменения сохранены.';
+                    setTimeout(function () {
+                        window.location.href = 'profile.html';
+                    }, 600);
                 } catch (error) {
                     console.error(error);
                     messageEl.textContent = 'Не удалось связаться с сервером.';

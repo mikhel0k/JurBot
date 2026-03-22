@@ -71,6 +71,7 @@ services:
       AI_CHAT_SERVICE_URL: "http://jurbot_ai_chat:8001"
     volumes:
       - ./backend/jwt_tokens:/app/jwt_tokens:ro
+      - ./frontend:/frontend:ro
     ports:
       - "8000:8000"
     depends_on:

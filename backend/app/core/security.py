@@ -97,13 +97,22 @@ def send_code_email_gmail(to_email: str, code: str) -> None:
             bool(settings.LOGIN_FOR_GMAIL),
             to_email,
         )
+        if settings.ENVIRONMENT == "development":
+            logger.warning("DEV: confirmation code for %s: %s", to_email, code)
         return
     msg = MIMEText(f"Ваш код подтверждения: {code}\nДействует 10 минут.", "plain", "utf-8")
     msg["Subject"] = "Код подтверждения"
     msg["From"] = settings.LOGIN_FOR_GMAIL
     msg["To"] = to_email
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.starttls()
-        server.login(settings.LOGIN_FOR_GMAIL, settings.PASSWORD_FOR_GMAIL)
-        server.sendmail(settings.LOGIN_FOR_GMAIL, [to_email], msg.as_string())
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(settings.LOGIN_FOR_GMAIL, settings.PASSWORD_FOR_GMAIL)
+            server.sendmail(settings.LOGIN_FOR_GMAIL, [to_email], msg.as_string())
+    except smtplib.SMTPException as e:
+        logger.error("SMTP error sending to %s: %s", to_email, e)
+        raise
+    except OSError as e:
+        logger.error("Network error sending email to %s: %s", to_email, e)
+        raise
     logger.info("Code email sent to %s", to_email) 

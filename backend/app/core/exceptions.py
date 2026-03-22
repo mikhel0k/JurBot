@@ -28,3 +28,9 @@ class UnauthorizedError(AppException):
 class InvalidCodeError(AppException):
     status_code = 401
     detail = "Invalid code"
+
+
+class EmailSendError(AppException):
+    """Не удалось отправить код на email (SMTP и т.п.)."""
+    status_code = 503
+    detail = "Could not send verification email"

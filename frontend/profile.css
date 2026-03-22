@@ -1,0 +1,348 @@
+/* Личный кабинет — макет ЮрБот (тёмная тема) */
+:root {
+    --cabinet-bg: #121214;
+    --cabinet-card: #1e1e26;
+    --cabinet-yellow: #fdc742;
+    --cabinet-text: #ffffff;
+    --cabinet-muted: rgba(255, 255, 255, 0.65);
+    --cabinet-border: rgba(255, 255, 255, 0.12);
+}
+
+body.cabinet-page {
+    margin: 0;
+    min-height: 100vh;
+    display: block;
+    padding: 0;
+    align-items: unset;
+    justify-content: unset;
+    background-color: var(--cabinet-bg);
+    color: var(--cabinet-text);
+}
+
+.cabinet-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px 48px;
+}
+
+/* Верхняя панель */
+.cabinet-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.cabinet-nav__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.cabinet-nav__logo-img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    display: block;
+}
+
+.cabinet-nav__brand-text {
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--cabinet-text);
+}
+
+.cabinet-nav__brand-accent {
+    color: var(--cabinet-yellow);
+}
+
+.cabinet-nav__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.cabinet-chat-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 20px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--cabinet-yellow);
+    background: transparent;
+    border: 2px solid var(--cabinet-yellow);
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.cabinet-chat-btn:hover {
+    background: rgba(253, 199, 66, 0.12);
+}
+
+.cabinet-nav__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--cabinet-yellow);
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.cabinet-nav__icon-btn:hover {
+    opacity: 0.92;
+}
+
+.cabinet-nav__icon-btn img {
+    width: 22px;
+    height: 22px;
+    display: block;
+}
+
+/* Обзор: слева пользователь, справа тариф */
+.cabinet-overview {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+    align-items: stretch;
+}
+
+@media (max-width: 900px) {
+    .cabinet-overview {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cabinet-overview__left {
+    background: var(--cabinet-card);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.cabinet-user-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.cabinet-avatar {
+    flex-shrink: 0;
+    width: 96px;
+    height: 96px;
+    border-radius: 12px;
+    background: #f5f5f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.cabinet-avatar img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+}
+
+.cabinet-fields {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cabinet-field {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: var(--cabinet-text);
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--cabinet-border);
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+
+.cabinet-toolbar--profile {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.cabinet-toolbar--profile .button {
+    margin-top: 0;
+    min-width: 140px;
+    text-decoration: none;
+}
+
+.cabinet-toolbar--profile a.button:hover,
+.cabinet-toolbar--profile a.button:focus {
+    text-decoration: none;
+}
+
+.cabinet-overview__right {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.cabinet-tariff-card {
+    background: var(--cabinet-card);
+    border-radius: 16px;
+    padding: 24px;
+    box-sizing: border-box;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.cabinet-tariff-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 18px;
+}
+
+.cabinet-tariff-row strong {
+    color: var(--cabinet-yellow);
+    font-weight: 700;
+}
+
+.cabinet-tariff-card hr {
+    border: none;
+    border-top: 1px solid var(--cabinet-border);
+    margin: 20px 0;
+}
+
+.cabinet-stats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-size: 15px;
+    color: var(--cabinet-muted);
+}
+
+.cabinet-stats span {
+    color: var(--cabinet-text);
+    font-weight: 600;
+}
+
+/* Три колонки */
+.cabinet-columns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: stretch;
+}
+
+@media (max-width: 960px) {
+    .cabinet-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cabinet-column-card {
+    background: var(--cabinet-card);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;
+}
+
+.cabinet-column-card__title {
+    margin: 0 0 16px;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--cabinet-text);
+}
+
+.cabinet-column-card__body {
+    flex: 1;
+    min-height: 120px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px dashed var(--cabinet-border);
+    padding: 12px;
+    margin-bottom: 16px;
+    overflow: auto;
+}
+
+.cabinet-column-card__body--empty {
+    border-style: dashed;
+}
+
+.cabinet-column-card__link {
+    margin-top: auto;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    align-self: flex-start;
+}
+
+.cabinet-column-card__link:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.cabinet-column-card .cabinet-add-btn {
+    margin: 0 0 12px;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+/* Список сотрудников внутри колонки */
+.cabinet-column-card .employee-list {
+    border: none;
+    background: transparent;
+    padding: 0;
+    min-height: 0;
+}
+
+.cabinet-column-card .employee-card {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--cabinet-border);
+}
+
+.cabinet-column-card .employee-card--fio-only {
+    padding: 12px 16px;
+}
+
+.cabinet-column-card .employee-card--fio-only .employee-card__name {
+    margin-bottom: 0;
+}
+
+.cabinet-empty--inline {
+    margin: 0;
+    font-size: 14px;
+    color: var(--cabinet-muted);
+}
+
+.cabinet-msg {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--cabinet-muted);
+}

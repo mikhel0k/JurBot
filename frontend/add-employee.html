@@ -9,122 +9,208 @@
 <body>
     <main class="page page--wide">
         <section class="form-container">
-            <header class="form-header form-header--space-between">
-                <a class="back-link back-link--with-text" href="#" aria-label="Назад">
+            <header class="form-header">
+                <a class="back-link" href="profile.html" aria-label="Назад">
                     <img src="images/Vector.svg" alt="" class="back-icon">
-                    <!-- <span class="back-text">назад</span> -->
                 </a>
                 <h1 class="form-header-title">Добавьте нового сотрудника</h1>
             </header>
 
             <form class="form form--two-cols" id="add-employee-form">
                 <div class="form-group">
-                    <label class="label" for="fio">ФИО</label>
-                    <input
-                        class="input"
-                        type="text"
-                        id="fio"
-                        name="fio"
-                        placeholder="Иванов Иван Иванович"
-                    >
+                    <label class="label" for="last_name">Фамилия</label>
+                    <input class="input" type="text" id="last_name" name="last_name" placeholder="Иванов" required maxlength="150" autocomplete="family-name">
                 </div>
                 <div class="form-group">
-                    <label class="label" for="position">Должность</label>
-                    <input
-                        class="input"
-                        type="text"
-                        id="position"
-                        name="position"
-                        placeholder="Бухгалтер"
-                    >
+                    <label class="label" for="first_name">Имя</label>
+                    <input class="input" type="text" id="first_name" name="first_name" placeholder="Иван" required maxlength="150" autocomplete="given-name">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="middle_name">Отчество</label>
+                    <input class="input" type="text" id="middle_name" name="middle_name" placeholder="Иванович" maxlength="150" autocomplete="additional-name">
                 </div>
                 <div class="form-group">
                     <label class="label" for="email">E-mail</label>
-                    <input
-                        class="input"
-                        type="email"
-                        id="email"
-                        name="email"
-                        placeholder="ivanovivan@company.ru"
-                    >
+                    <input class="input" type="email" id="email" name="email" placeholder="ivanov@company.ru" required autocomplete="email">
                 </div>
                 <div class="form-group">
-                    <label class="label" for="phone">Номер телефона</label>
-                    <input
-                        class="input"
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        placeholder="+7 (999) 999-99-99"
-                    >
+                    <label class="label" for="phone_number">Номер телефона</label>
+                    <input class="input" type="tel" id="phone_number" name="phone_number" placeholder="+79991234567" required autocomplete="tel">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="position">Должность</label>
+                    <input class="input" type="text" id="position" name="position" placeholder="Бухгалтер" required maxlength="150">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="salary">Оклад (₽)</label>
+                    <input class="input" type="number" id="salary" name="salary" placeholder="50000" required min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="status">Статус</label>
+                    <select class="input" id="status" name="status" required>
+                        <option value="active" selected>Активен</option>
+                        <option value="on_leave">В отпуске</option>
+                        <option value="probation">Испытательный срок</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="label" for="hire_date">Дата приёма на работу</label>
+                    <input class="input" type="date" id="hire_date" name="hire_date" required>
+                </div>
+                <div class="form-group">
+                    <label class="label" for="passport_series">Серия паспорта</label>
+                    <input class="input" type="text" id="passport_series" name="passport_series" placeholder="1234" required maxlength="4" inputmode="numeric" pattern="[0-9]{4}">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="passport_number">Номер паспорта</label>
+                    <input class="input" type="text" id="passport_number" name="passport_number" placeholder="567890" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="passport_issued_date">Дата выдачи паспорта</label>
+                    <input class="input" type="date" id="passport_issued_date" name="passport_issued_date" required>
+                </div>
+                <div class="form-group form-group--full">
+                    <label class="label" for="passport_issued_place">Кем выдан паспорт</label>
+                    <input class="input" type="text" id="passport_issued_place" name="passport_issued_place" placeholder="ОТДЕЛОМ УФМС …" required maxlength="255">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="passport_issued_code">Код подразделения</label>
+                    <input class="input" type="text" id="passport_issued_code" name="passport_issued_code" placeholder="123-456" required maxlength="10">
                 </div>
                 <div class="form-group">
                     <label class="label" for="inn">ИНН</label>
-                    <input
-                        class="input"
-                        type="text"
-                        id="inn"
-                        name="inn"
-                        placeholder="772345678901"
-                    >
+                    <input class="input" type="text" id="inn" name="inn" placeholder="10 или 12 цифр" required minlength="10" maxlength="12" inputmode="numeric">
                 </div>
                 <div class="form-group">
-                    <label class="label" for="passport">Паспортные данные</label>
-                    <input
-                        class="input"
-                        type="text"
-                        id="passport"
-                        name="passport"
-                        placeholder="1234 567890"
-                    >
-                </div>
-                <div class="form-group">
-                    <label class="label" for="address">Адрес прописки</label>
-                    <input
-                        class="input"
-                        type="text"
-                        id="address"
-                        name="address"
-                        placeholder="г. Москва, ул. Садовая, д. 5, кв. 12"
-                    >
-                </div>
-                <div class="form-group">
-                    <label class="label" for="hire-date">Дата приёма на работу</label>
-                    <input
-                        class="input"
-                        type="text"
-                        id="hire-date"
-                        name="hire_date"
-                        placeholder="01.11.2025"
-                    >
-                </div>
-
-                <div class="form-group form-group--full">
-                    <span class="label">Нужна ли генерация пакета документов?</span>
-                    <label class="checkbox-label">
-                        <input class="input-checkbox" type="checkbox" name="generate_docs" value="1">
-                        <span class="checkbox-text">Сотрудник новый, нужно сгенерировать документы</span>
-                    </label>
+                    <label class="label" for="snils">СНИЛС</label>
+                    <input class="input" type="text" id="snils" name="snils" placeholder="12345678901" required maxlength="11" minlength="11" inputmode="numeric" pattern="[0-9]{11}">
                 </div>
                 <div class="form-group form-group--full">
-                    <span class="label">Какой вид сотрудничества вы оформляете?</span>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input class="input-radio" type="radio" name="contract_type" value="td">
-                            <span class="radio-text">Трудовой договор (ТД)</span>
-                        </label>
-                        <label class="radio-label">
-                            <input class="input-radio" type="radio" name="contract_type" value="gph">
-                            <span class="radio-text">Гражданско-правовой договор (ГПХ)</span>
-                        </label>
-                    </div>
+                    <label class="label" for="address">Адрес регистрации</label>
+                    <input class="input" type="text" id="address" name="address" placeholder="г. Москва, ул. …" required maxlength="255">
                 </div>
 
                 <div class="form-group form-group--full buttons-row buttons-row--single">
-                    <button class="button button--full" type="submit">Перейти к документам</button>
+                    <button class="button button--full" type="submit">Добавить сотрудника</button>
                 </div>
+                <p class="form-hint form-group--full" id="add-employee-message" aria-live="polite"></p>
             </form>
         </section>
     </main>
+
+    <script src="api-config.js"></script>
+    <script>
+        (function () {
+            function normalizePhoneForApi(raw) {
+                var s = String(raw).trim().replace(/[\s()-]/g, '');
+                if (!s) return '';
+                if (/^\+7\d{10}$/.test(s)) return s;
+                if (/^8\d{10}$/.test(s)) return '+7' + s.slice(1);
+                if (/^7\d{10}$/.test(s)) return '+' + s;
+                if (/^\d{10}$/.test(s)) return '+7' + s;
+                return s;
+            }
+
+            function digitsOnly(s) {
+                return String(s).replace(/\D/g, '');
+            }
+
+            var form = document.getElementById('add-employee-form');
+            var messageEl = document.getElementById('add-employee-message');
+            var base = window.API_BASE || 'http://localhost:8000';
+
+            if (!form) return;
+
+            form.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                messageEl.textContent = '';
+
+                var fd = new FormData(form);
+                var phone = normalizePhoneForApi(fd.get('phone_number') || '');
+                if (!/^\+7\d{10}$/.test(phone)) {
+                    messageEl.textContent = 'Телефон: +7 и 10 цифр или 11 цифр, начинающихся с 8.';
+                    return;
+                }
+
+                var inn = digitsOnly(fd.get('inn') || '');
+                if (inn.length !== 10 && inn.length !== 12) {
+                    messageEl.textContent = 'ИНН должен содержать 10 или 12 цифр.';
+                    return;
+                }
+
+                var snils = digitsOnly(fd.get('snils') || '');
+                if (snils.length !== 11) {
+                    messageEl.textContent = 'СНИЛС — 11 цифр.';
+                    return;
+                }
+
+                var middle = (fd.get('middle_name') || '').toString().trim();
+                if (!middle) middle = '—';
+
+                var salaryRaw = fd.get('salary');
+                var salaryNum = parseFloat(String(salaryRaw).replace(',', '.'));
+                if (isNaN(salaryNum) || salaryNum < 0) {
+                    messageEl.textContent = 'Укажите корректный оклад.';
+                    return;
+                }
+
+                var ps = digitsOnly(fd.get('passport_series') || '');
+                var pn = digitsOnly(fd.get('passport_number') || '');
+                if (ps.length !== 4 || pn.length !== 6) {
+                    messageEl.textContent = 'Серия паспорта — 4 цифры, номер — 6 цифр.';
+                    return;
+                }
+
+                var payload = {
+                    last_name: (fd.get('last_name') || '').toString().trim(),
+                    first_name: (fd.get('first_name') || '').toString().trim(),
+                    middle_name: middle,
+                    email: (fd.get('email') || '').toString().trim(),
+                    phone_number: phone,
+                    position: (fd.get('position') || '').toString().trim(),
+                    salary: salaryNum,
+                    status: (fd.get('status') || '').toString().trim(),
+                    hire_date: (fd.get('hire_date') || '').toString(),
+                    passport_series: ps,
+                    passport_number: pn,
+                    passport_issued_date: (fd.get('passport_issued_date') || '').toString(),
+                    passport_issued_place: (fd.get('passport_issued_place') || '').toString().trim(),
+                    passport_issued_code: (fd.get('passport_issued_code') || '').toString().trim(),
+                    inn: inn,
+                    snils: snils,
+                    address: (fd.get('address') || '').toString().trim(),
+                };
+
+                try {
+                    var response = await fetch(base + '/v1/employee/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (response.status === 401) {
+                        messageEl.textContent = 'Нужна авторизация и компания. Войдите снова.';
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        var err = await response.json().catch(function () { return {}; });
+                        var detail = Array.isArray(err.detail)
+                            ? err.detail.map(function (d) { return d.msg || d; }).join('. ')
+                            : (err.detail || '');
+                        messageEl.textContent = detail || 'Не удалось сохранить сотрудника.';
+                        return;
+                    }
+
+                    messageEl.textContent = 'Сотрудник добавлен.';
+                    window.location.href = 'profile.html';
+                } catch (e) {
+                    console.error(e);
+                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

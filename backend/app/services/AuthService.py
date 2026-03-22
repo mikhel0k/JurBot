@@ -16,7 +16,7 @@ from app.core import (
     send_code_email_gmail,
     verify_password,
 )
-from app.core.exceptions import AlreadyExistsError, InvalidCodeError, UnauthorizedError
+from app.core.exceptions import AlreadyExistsError, EmailSendError, InvalidCodeError, UnauthorizedError
 from app.core.security import decode_token, REFRESH_TOKEN_DURATION_MIN
 from app.models.User import User
 from app.repository import CompanyRepository, UserRepository
@@ -46,7 +46,13 @@ async def register(session: AsyncSession, redis: Redis, user_repo: UserRepositor
     user_data.pop("password")
     code = "".join(str(randint(0, 9)) for _ in range(6))
     reg_id = uuid4()
-    await asyncio.to_thread(send_code_email_gmail, user_data["email"], code)
+    try:
+        await asyncio.to_thread(send_code_email_gmail, user_data["email"], code)
+    except Exception as e:
+        logger.exception("Failed to send registration email to %s", user_data["email"])
+        raise EmailSendError(
+            "Could not send verification email. Check Gmail/SMTP or set SEND_LOGIN_CODE_EMAIL=false in backend/.env for local dev."
+        ) from e
     await redis.set(user_data["email"], "registering", ex=60 * 15)
     await redis.set(user_data["phone_number"], "registering", ex=60 * 15)
     await redis.set(f"{reg_id}_{code}", json.dumps(user_data), ex=60 * 15)
@@ -99,7 +105,13 @@ async def login(session: AsyncSession, redis: Redis, user_repo: UserRepository, 
     user_data = UserResponse.model_validate(user_in_db).model_dump()
     code = "".join(str(randint(0, 9)) for _ in range(6))
     reg_id = uuid4()
-    await asyncio.to_thread(send_code_email_gmail, user_data["email"], code)
+    try:
+        await asyncio.to_thread(send_code_email_gmail, user_data["email"], code)
+    except Exception as e:
+        logger.exception("Failed to send login email to %s", user_data["email"])
+        raise EmailSendError(
+            "Could not send verification email. Check Gmail/SMTP or set SEND_LOGIN_CODE_EMAIL=false in backend/.env for local dev."
+        ) from e
     await redis.set(f"{reg_id}_{code}", json.dumps(user_data), ex=60 * 15)
     logger.info("Login code sent jti=%s", reg_id)
     return reg_id

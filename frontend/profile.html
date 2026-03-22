@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет — ЮрБот</title>
+    <link rel="stylesheet" href="styles1.css">
+    <link rel="stylesheet" href="profile.css">
+</head>
+<body class="cabinet-page">
+    <div class="cabinet-shell">
+        <header class="cabinet-nav">
+            <a class="cabinet-nav__brand" href="main.html">
+                <img src="img/logo.svg" alt="" class="cabinet-nav__logo-img" width="44" height="44">
+                <span class="cabinet-nav__brand-text"><span class="cabinet-nav__brand-accent">ЮР</span>БОТ</span>
+            </a>
+            <nav class="cabinet-nav__actions" aria-label="Действия">
+                <a class="cabinet-chat-btn" href="main.html">Перейти в чат</a>
+                <button type="button" class="cabinet-nav__icon-btn" title="Помощь" aria-label="Помощь">
+                    <img src="img/question.svg" alt="">
+                </button>
+                <span class="cabinet-nav__icon-btn" role="img" aria-label="Профиль">
+                    <img src="img/profile.svg" alt="">
+                </span>
+            </nav>
+        </header>
+
+        <section class="cabinet-overview" aria-label="Профиль и тариф">
+            <div class="cabinet-overview__left">
+                <div class="cabinet-user-row">
+                    <div class="cabinet-avatar">
+                        <img src="img/profile.svg" alt="">
+                    </div>
+                    <div class="cabinet-fields">
+                        <div class="cabinet-field" id="org-name-display" aria-label="Название организации">Загрузка…</div>
+                        <div class="cabinet-field" id="user-email-display" aria-label="Email">—</div>
+                    </div>
+                </div>
+                <div class="cabinet-toolbar cabinet-toolbar--profile">
+                    <button type="button" class="button" id="logout-btn">Выйти</button>
+                    <a class="button" href="company-settings.html">Настройки</a>
+                </div>
+            </div>
+            <div class="cabinet-overview__right">
+                <div class="cabinet-tariff-card">
+                    <div class="cabinet-tariff-row">
+                        <span>Ваш тариф:</span>
+                        <strong>Премиум</strong>
+                    </div>
+                    <hr>
+                    <ul class="cabinet-stats">
+                        <li>Всего сотрудников: <span id="stat-employees">0</span></li>
+                        <li>Всего сохранено шаблонов: <span id="stat-templates">0</span></li>
+                        <li>Всего сгенерировано документов: <span id="stat-documents">0</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <div class="cabinet-columns">
+            <section class="cabinet-column-card" aria-labelledby="col-history">
+                <h2 class="cabinet-column-card__title" id="col-history">История запросов</h2>
+                <div class="cabinet-column-card__body cabinet-column-card__body--empty" aria-hidden="true"></div>
+                <a href="#" class="cabinet-column-card__link">Посмотреть весь список</a>
+            </section>
+            <section class="cabinet-column-card" aria-labelledby="col-docs">
+                <h2 class="cabinet-column-card__title" id="col-docs">Документы</h2>
+                <div class="cabinet-column-card__body cabinet-column-card__body--empty" aria-hidden="true"></div>
+                <a href="#" class="cabinet-column-card__link">Посмотреть весь список</a>
+            </section>
+            <section class="cabinet-column-card" aria-labelledby="col-employees">
+                <h2 class="cabinet-column-card__title" id="col-employees">Сотрудники</h2>
+                <div class="cabinet-column-card__body" id="cabinet-employees">
+                    <div class="employee-list" id="employee-list" aria-live="polite"></div>
+                    <p class="cabinet-empty--inline" id="employee-empty" hidden>Пока нет сотрудников</p>
+                </div>
+                <a class="button cabinet-add-btn" href="add-employee.html">Добавить нового сотрудника</a>
+                <a href="#cabinet-employees" class="cabinet-column-card__link">Посмотреть весь список</a>
+            </section>
+        </div>
+
+        <p class="cabinet-msg form-hint" id="profile-message" aria-live="polite"></p>
+    </div>
+
+    <script src="api-config.js"></script>
+    <script>
+        (function () {
+            const base = window.API_BASE || 'http://localhost:8000';
+            const orgEl = document.getElementById('org-name-display');
+            const emailEl = document.getElementById('user-email-display');
+            const listEl = document.getElementById('employee-list');
+            const emptyEl = document.getElementById('employee-empty');
+            const msgEl = document.getElementById('profile-message');
+            const statEmp = document.getElementById('stat-employees');
+
+            var savedEmail = sessionStorage.getItem('cabinet_user_email');
+            if (savedEmail) {
+                emailEl.textContent = savedEmail;
+            }
+
+            function redirectUnauthenticated() {
+                window.location.href = 'index.html';
+            }
+
+            function redirectNoCompany() {
+                window.location.href = 'register-step2.html';
+            }
+
+            function esc(s) {
+                var d = document.createElement('div');
+                d.textContent = s;
+                return d.innerHTML;
+            }
+
+            function renderEmployees(items) {
+                listEl.innerHTML = '';
+                if (!items || items.length === 0) {
+                    emptyEl.hidden = false;
+                    statEmp.textContent = '0';
+                    return;
+                }
+                emptyEl.hidden = true;
+                statEmp.textContent = String(items.length);
+                items.forEach(function (emp) {
+                    var fio = [emp.last_name, emp.first_name, emp.middle_name].filter(Boolean).join(' ');
+                    var card = document.createElement('article');
+                    card.className = 'employee-card employee-card--fio-only';
+                    card.innerHTML =
+                        '<div class="employee-card__name">' + esc(fio || '—') + '</div>';
+                    listEl.appendChild(card);
+                });
+            }
+
+            document.getElementById('logout-btn').addEventListener('click', async function () {
+                msgEl.textContent = '';
+                try {
+                    await fetch(base + '/v1/auth/logout', {
+                        method: 'POST',
+                        credentials: 'include',
+                    });
+                } catch (e) {
+                    console.error(e);
+                }
+                sessionStorage.removeItem('cabinet_user_email');
+                window.location.href = 'index.html';
+            });
+
+            (async function load() {
+                try {
+                    var cRes = await fetch(base + '/v1/company/', { credentials: 'include' });
+                    if (cRes.status === 401) {
+                        redirectUnauthenticated();
+                        return;
+                    }
+                    if (cRes.status === 404) {
+                        redirectNoCompany();
+                        return;
+                    }
+                    if (!cRes.ok) {
+                        orgEl.textContent = 'Не удалось загрузить организацию.';
+                        return;
+                    }
+                    var company = await cRes.json();
+                    orgEl.textContent = company.name || 'Организация';
+
+                    var eRes = await fetch(base + '/v1/employee/', { credentials: 'include' });
+                    if (eRes.status === 401) {
+                        msgEl.textContent = 'Не удалось загрузить список сотрудников.';
+                        return;
+                    }
+                    if (!eRes.ok) {
+                        msgEl.textContent = 'Ошибка при загрузке сотрудников.';
+                        return;
+                    }
+                    var employees = await eRes.json();
+                    renderEmployees(employees);
+                } catch (err) {
+                    console.error(err);
+                    orgEl.textContent = 'Ошибка сети.';
+                }
+            })();
+        })();
+    </script>
+</body>
+</html>

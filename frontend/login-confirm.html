@@ -37,6 +37,7 @@
         </section>
     </main>
 
+    <script src="api-config.js"></script>
     <script>
         (function () {
             const jti = sessionStorage.getItem('login_jti');
@@ -63,7 +64,7 @@
                 const payload = { jti, code };
 
                 try {
-                    const response = await fetch('http://localhost:8000/v1/auth/login/confirm', {
+                    const response = await fetch((window.API_BASE || 'http://localhost:8000') + '/v1/auth/login/confirm', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
@@ -82,12 +83,12 @@
 
                     if (data && data.status === 'success') {
                         messageEl.textContent = 'Вход выполнен.';
-                        window.location.href = 'main.html';
+                        window.location.href = 'profile.html';
                     } else if (data && data.status && data.status.includes('company')) {
                         messageEl.textContent = 'Вход выполнен. У вас ещё нет компании — можно создать.';
                         window.location.href = 'register-step2.html';
                     } else {
-                        window.location.href = 'main.html';
+                        window.location.href = 'profile.html';
                     }
                 } catch (error) {
                     console.error(error);
