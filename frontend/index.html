@@ -24,15 +24,20 @@
                 >
 
                 <label class="label" for="password">Введите пароль</label>
-                <input
-                    class="input"
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Минимум 8 символов"
-                    autocomplete="current-password"
-                    required
-                >
+                <div class="input-wrap">
+                    <input
+                        class="input input-with-icon"
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Минимум 8 символов"
+                        autocomplete="current-password"
+                        required
+                    >
+                    <button type="button" class="toggle-password" aria-label="Показать пароль">
+                        <img src="images/eye.svg" alt="" class="icon-eye">
+                    </button>
+                </div>
 
                 <button class="button" type="submit">Продолжить</button>
                 <p class="form-hint" id="login-message" aria-live="polite"></p>
@@ -45,6 +50,7 @@
     </main>
 
     <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
     <script>
         (function () {
             const form = document.getElementById('login-form');
@@ -52,6 +58,16 @@
 
             if (!form) {
                 return;
+            }
+
+            const passwordInput = document.getElementById('password');
+            const togglePasswordBtn = form.querySelector('.toggle-password');
+            if (togglePasswordBtn && passwordInput) {
+                togglePasswordBtn.addEventListener('click', () => {
+                    const isHidden = passwordInput.type === 'password';
+                    passwordInput.type = isHidden ? 'text' : 'password';
+                    togglePasswordBtn.setAttribute('aria-label', isHidden ? 'Скрыть пароль' : 'Показать пароль');
+                });
             }
 
             form.addEventListener('submit', async (event) => {
@@ -81,9 +97,9 @@
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        const detail = Array.isArray(errorData.detail) ? errorData.detail.map(d => d.msg || d).join('. ') : (errorData.detail || '');
-                        messageEl.textContent = detail || 'Ошибка входа. Попробуйте ещё раз.';
+                        await JurBotUi.logBadResponse('POST /v1/auth/login', response);
+                        messageEl.textContent =
+                            response.status === 401 ? 'Неверный email или пароль.' : '';
                         return;
                     }
 
@@ -94,11 +110,12 @@
                         messageEl.textContent = 'Код отправлен на email. Проверьте почту.';
                         window.location.href = 'login-confirm.html';
                     } else {
-                        messageEl.textContent = 'Неожиданный ответ сервера.';
+                        JurBotUi.logError('POST /v1/auth/login: нет jti в ответе', data);
+                        JurBotUi.clearHint(messageEl);
                     }
                 } catch (error) {
-                    console.error(error);
-                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                    JurBotUi.logError('POST /v1/auth/login: сеть', error);
+                    JurBotUi.clearHint(messageEl);
                 }
             });
         })();

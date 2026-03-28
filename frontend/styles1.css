@@ -77,6 +77,18 @@ body {
     border-color: #FDC742;
 }
 
+/* Автозаполнение (Opera, Chrome, Edge): убираем системный голубой/жёлтый фон */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus,
+.input:-webkit-autofill:active {
+    -webkit-text-fill-color: rgba(255, 255, 255, 1);
+    caret-color: #ffffff;
+    box-shadow: 0 0 0 1000px #282736 inset;
+    -webkit-box-shadow: 0 0 0 1000px #282736 inset;
+    transition: background-color 99999s ease-out;
+}
+
 .button {
     margin-top: 50px;
     padding: 16px 24px;

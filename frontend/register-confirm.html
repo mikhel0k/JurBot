@@ -38,6 +38,7 @@
     </main>
 
     <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
     <script>
         (function () {
             const jti = sessionStorage.getItem('register_jti');
@@ -72,9 +73,8 @@
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        const detail = Array.isArray(errorData.detail) ? errorData.detail.map(d => d.msg || d).join('. ') : (errorData.detail || '');
-                        messageEl.textContent = detail || 'Неверный или истёкший код. Попробуйте зарегистрироваться снова.';
+                        await JurBotUi.logBadResponse('POST /v1/auth/register/confirm', response);
+                        messageEl.textContent = 'Код неверный или устарел. Начните регистрацию снова.';
                         return;
                     }
 
@@ -88,8 +88,8 @@
                         window.location.href = 'register-step2.html';
                     }
                 } catch (error) {
-                    console.error(error);
-                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                    JurBotUi.logError('POST /v1/auth/register/confirm: сеть', error);
+                    JurBotUi.clearHint(messageEl);
                 }
             });
         })();

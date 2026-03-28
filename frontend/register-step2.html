@@ -63,7 +63,7 @@
                 </div>
 
                 <div class="buttons-row">
-                    <a href="profile.html" class="button button--secondary">Пропустить</a>
+                    <a href="chat.html" class="button button--secondary">Пропустить</a>
                     <button class="button" type="submit">Продолжить</button>
                 </div>
                 <p class="form-hint" id="company-message" aria-live="polite"></p>
@@ -72,6 +72,7 @@
     </main>
 
     <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
     <script>
         (function () {
             const form = document.getElementById('company-form');
@@ -110,24 +111,23 @@
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
+                        await JurBotUi.logBadResponse('POST /v1/company/', response);
                         if (response.status === 401) {
-                            messageEl.textContent =
-                                'Сессия не найдена или истекла. Войдите снова через форму входа и откройте эту страницу по адресу ' +
-                                (window.API_BASE || 'http://localhost:8000') +
-                                '/ui/register-step2.html (не через file:// — иначе браузер не отправит куки).';
+                            messageEl.textContent = 'Сессия истекла. Войдите снова.';
+                            JurBotUi.logError('POST /v1/company/ 401', {
+                                hint: 'Откройте страницу через тот же хост, что и API (например /ui/), не file://',
+                            });
                             return;
                         }
-                        const detail = Array.isArray(errorData.detail) ? errorData.detail.map(d => d.msg || d).join('. ') : (errorData.detail || '');
-                        messageEl.textContent = detail || 'Ошибка при сохранении компании.';
+                        JurBotUi.clearHint(messageEl);
                         return;
                     }
 
                     messageEl.textContent = 'Компания создана.';
                     window.location.href = 'profile.html';
                 } catch (error) {
-                    console.error(error);
-                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                    JurBotUi.logError('POST /v1/company/: сеть', error);
+                    JurBotUi.clearHint(messageEl);
                 }
             });
         })();

@@ -108,6 +108,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/ru.js"></script>
     <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
     <script>
         (function () {
             function normalizePhoneForApi(raw) {
@@ -176,7 +177,8 @@
                             return;
                         }
                         if (!res.ok) {
-                            messageEl.textContent = 'Не удалось загрузить данные сотрудника.';
+                            await JurBotUi.logBadResponse('GET /v1/employee/' + editId, res);
+                            JurBotUi.clearHint(messageEl);
                             return;
                         }
                         var e = await res.json();
@@ -204,8 +206,8 @@
                         setFlatpickrDate('hire_date', hd);
                         setFlatpickrDate('passport_issued_date', pd);
                     } catch (err) {
-                        console.error(err);
-                        messageEl.textContent = 'Ошибка сети при загрузке.';
+                        JurBotUi.logError('GET /v1/employee/: сеть', err);
+                        JurBotUi.clearHint(messageEl);
                     }
                 })();
             }
@@ -288,19 +290,19 @@
                     }
 
                     if (!response.ok) {
-                        var err = await response.json().catch(function () { return {}; });
-                        var detail = Array.isArray(err.detail)
-                            ? err.detail.map(function (d) { return d.msg || d; }).join('. ')
-                            : (err.detail || '');
-                        messageEl.textContent = detail || 'Не удалось сохранить сотрудника.';
+                        await JurBotUi.logBadResponse(
+                            (editId ? 'PATCH' : 'POST') + ' /v1/employee/',
+                            response
+                        );
+                        JurBotUi.clearHint(messageEl);
                         return;
                     }
 
                     messageEl.textContent = editId ? 'Изменения сохранены.' : 'Сотрудник добавлен.';
                     window.location.href = 'profile.html';
                 } catch (e) {
-                    console.error(e);
-                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                    JurBotUi.logError('сохранение сотрудника: сеть', e);
+                    JurBotUi.clearHint(messageEl);
                 }
             });
         })();

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Страница не найдена — ЮрБот</title>
+    <link rel="stylesheet" href="styles1.css">
+    <link rel="stylesheet" href="error-page.css">
+</head>
+<body class="error-page-body">
+    <div class="error-page" id="error-root">
+        <header class="error-page__header">
+            <a class="error-page__brand" href="main.html">
+                <img src="img/logo.svg" alt="" class="error-page__logo-img" width="44" height="44">
+                <span><span class="error-page__brand-accent">ЮР</span>БОТ</span>
+            </a>
+        </header>
+
+        <main class="error-page__main">
+            <div class="error-page__visual" aria-hidden="true">
+                <span class="error-page__code" id="error-code">404</span>
+            </div>
+
+            <div class="error-page__panel">
+                <h1 class="error-page__title" id="error-title">Страница не найдена</h1>
+                <p class="error-page__text" id="error-text">
+                    Такой страницы нет или ссылка устарела. Проверьте адрес или вернитесь на главную.
+                </p>
+                <p class="error-page__hint" id="error-hint" hidden>
+                    <span class="error-page__status-dot" aria-hidden="true"></span>
+                    Идут технические работы — сервис скоро снова будет доступен.
+                </p>
+            </div>
+
+            <div class="error-page__actions">
+                <a class="button" href="main.html">На главную</a>
+                <a class="error-page__link" href="index.html">Страница входа</a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var maintenance =
+                params.get("maintenance") === "1" ||
+                params.get("tech") === "1" ||
+                params.get("503") === "1";
+
+            var root = document.getElementById("error-root");
+            var codeEl = document.getElementById("error-code");
+            var titleEl = document.getElementById("error-title");
+            var textEl = document.getElementById("error-text");
+            var hintEl = document.getElementById("error-hint");
+            var docTitle = document.querySelector("title");
+
+            if (maintenance) {
+                root.classList.add("error-page--maintenance");
+                if (docTitle) docTitle.textContent = "Технические работы — ЮрБот";
+                if (codeEl) codeEl.textContent = "503";
+                if (titleEl) titleEl.textContent = "Сервис временно недоступен";
+                if (textEl) {
+                    textEl.textContent =
+                        "Проводятся технические работы. Мы уже всё чиним — попробуйте зайти чуть позже.";
+                }
+                if (hintEl) hintEl.hidden = false;
+            }
+        })();
+    </script>
+</body>
+</html>

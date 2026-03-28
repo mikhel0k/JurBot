@@ -38,6 +38,7 @@
     </main>
 
     <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
     <script>
         (function () {
             const jti = sessionStorage.getItem('login_jti');
@@ -72,9 +73,8 @@
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        const detail = Array.isArray(errorData.detail) ? errorData.detail.map(d => d.msg || d).join('. ') : (errorData.detail || '');
-                        messageEl.textContent = detail || 'Неверный или истёкший код. Попробуйте войти снова.';
+                        await JurBotUi.logBadResponse('POST /v1/auth/login/confirm', response);
+                        messageEl.textContent = 'Код неверный или устарел. Запросите вход снова.';
                         return;
                     }
 
@@ -91,8 +91,8 @@
                         window.location.href = 'profile.html';
                     }
                 } catch (error) {
-                    console.error(error);
-                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                    JurBotUi.logError('POST /v1/auth/login/confirm: сеть', error);
+                    JurBotUi.clearHint(messageEl);
                 }
             });
         })();

@@ -91,30 +91,6 @@ body.cabinet-page {
     background: rgba(253, 199, 66, 0.12);
 }
 
-.cabinet-nav__icon-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: var(--cabinet-yellow);
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-}
-
-.cabinet-nav__icon-btn:hover {
-    opacity: 0.92;
-}
-
-.cabinet-nav__icon-btn img {
-    width: 22px;
-    height: 22px;
-    display: block;
-}
-
 /* Обзор: слева пользователь, справа тариф */
 .cabinet-overview {
     display: grid;

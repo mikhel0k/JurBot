@@ -16,12 +16,6 @@
             </a>
             <nav class="cabinet-nav__actions" aria-label="Действия">
                 <a class="cabinet-chat-btn" href="chat.html">Перейти в чат</a>
-                <button type="button" class="cabinet-nav__icon-btn" title="Помощь" aria-label="Помощь">
-                    <img src="img/question.svg" alt="">
-                </button>
-                <span class="cabinet-nav__icon-btn" role="img" aria-label="Профиль">
-                    <img src="img/profile.svg" alt="">
-                </span>
             </nav>
         </header>
 
@@ -50,7 +44,6 @@
                     <hr>
                     <ul class="cabinet-stats">
                         <li>Всего сотрудников: <span id="stat-employees">0</span></li>
-                        <li>Всего сохранено шаблонов: <span id="stat-templates">0</span></li>
                         <li>Всего сгенерировано документов: <span id="stat-documents">0</span></li>
                     </ul>
                 </div>
@@ -96,6 +89,7 @@
     </div>
 
     <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
     <script>
         (function () {
             const base = window.API_BASE || 'http://localhost:8000';
@@ -209,15 +203,13 @@
                         body: JSON.stringify([pendingDeleteId]),
                     });
                     if (res.status === 401) {
-                        msgEl.textContent = 'Сессия истекла. Войдите снова.';
                         closeDeleteModal();
+                        redirectUnauthenticated();
                         return;
                     }
                     if (!res.ok) {
-                        var err = await res.json().catch(function () { return {}; });
-                        msgEl.textContent =
-                            (typeof err.detail === 'string' ? err.detail : '') ||
-                            'Не удалось удалить сотрудника.';
+                        await JurBotUi.logBadResponse('DELETE /v1/employee/', res);
+                        JurBotUi.clearHint(msgEl);
                         closeDeleteModal();
                         return;
                     }
@@ -226,10 +218,12 @@
                     if (eRes.ok) {
                         var employees = await eRes.json();
                         renderEmployees(employees);
+                    } else {
+                        await JurBotUi.logBadResponse('GET /v1/employee/ (после удаления)', eRes);
                     }
                 } catch (e) {
-                    console.error(e);
-                    msgEl.textContent = 'Ошибка сети при удалении.';
+                    JurBotUi.logError('DELETE /v1/employee/: сеть', e);
+                    JurBotUi.clearHint(msgEl);
                     closeDeleteModal();
                 } finally {
                     deleteModalConfirm.disabled = false;
@@ -262,7 +256,8 @@
                         return;
                     }
                     if (!cRes.ok) {
-                        orgEl.textContent = 'Не удалось загрузить организацию.';
+                        await JurBotUi.logBadResponse('GET /v1/company/', cRes);
+                        orgEl.textContent = '—';
                         return;
                     }
                     var company = await cRes.json();
@@ -270,18 +265,20 @@
 
                     var eRes = await fetch(base + '/v1/employee/', { credentials: 'include' });
                     if (eRes.status === 401) {
-                        msgEl.textContent = 'Не удалось загрузить список сотрудников.';
+                        redirectUnauthenticated();
                         return;
                     }
                     if (!eRes.ok) {
-                        msgEl.textContent = 'Ошибка при загрузке сотрудников.';
+                        await JurBotUi.logBadResponse('GET /v1/employee/', eRes);
+                        JurBotUi.clearHint(msgEl);
                         return;
                     }
                     var employees = await eRes.json();
                     renderEmployees(employees);
                 } catch (err) {
-                    console.error(err);
-                    orgEl.textContent = 'Ошибка сети.';
+                    JurBotUi.logError('profile: загрузка', err);
+                    orgEl.textContent = '—';
+                    JurBotUi.clearHint(msgEl);
                 }
             })();
         })();

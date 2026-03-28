@@ -74,6 +74,7 @@
     </main>
 
     <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
     <script>
         (function () {
             const form = document.getElementById('company-settings-form');
@@ -94,7 +95,8 @@
                         return;
                     }
                     if (!response.ok) {
-                        messageEl.textContent = 'Не удалось загрузить данные организации.';
+                        await JurBotUi.logBadResponse('GET /v1/company/', response);
+                        JurBotUi.clearHint(messageEl);
                         return;
                     }
                     const data = await response.json();
@@ -103,8 +105,8 @@
                     document.getElementById('inn').value = data.inn || '';
                     document.getElementById('snils').value = data.snils || '';
                 } catch (e) {
-                    console.error(e);
-                    messageEl.textContent = 'Ошибка сети при загрузке.';
+                    JurBotUi.logError('GET /v1/company/: сеть', e);
+                    JurBotUi.clearHint(messageEl);
                 }
             })();
 
@@ -134,11 +136,8 @@
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(function () { return {}; });
-                        var detail = Array.isArray(errorData.detail)
-                            ? errorData.detail.map(function (d) { return d.msg || d; }).join('. ')
-                            : (errorData.detail || '');
-                        messageEl.textContent = detail || 'Ошибка при сохранении.';
+                        await JurBotUi.logBadResponse('PATCH /v1/company/', response);
+                        JurBotUi.clearHint(messageEl);
                         return;
                     }
 
@@ -147,8 +146,8 @@
                         window.location.href = 'profile.html';
                     }, 600);
                 } catch (error) {
-                    console.error(error);
-                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                    JurBotUi.logError('PATCH /v1/company/: сеть', error);
+                    JurBotUi.clearHint(messageEl);
                 }
             });
         })();

@@ -76,6 +76,7 @@
     </main>
 
     <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
     <script>
         (function () {
             function normalizePhoneForApi(raw) {
@@ -134,9 +135,8 @@
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        const detail = Array.isArray(errorData.detail) ? errorData.detail.map(d => d.msg || d).join('. ') : (errorData.detail || '');
-                        messageEl.textContent = detail || 'Ошибка регистрации. Попробуйте ещё раз.';
+                        await JurBotUi.logBadResponse('POST /v1/auth/register', response);
+                        JurBotUi.clearHint(messageEl);
                         return;
                     }
 
@@ -147,11 +147,12 @@
                         messageEl.textContent = 'Код для подтверждения регистрации отправлен на email.';
                         window.location.href = 'register-confirm.html';
                     } else {
-                        messageEl.textContent = 'Неожиданный ответ сервера.';
+                        JurBotUi.logError('POST /v1/auth/register: нет jti в ответе', data);
+                        JurBotUi.clearHint(messageEl);
                     }
                 } catch (error) {
-                    console.error(error);
-                    messageEl.textContent = 'Не удалось связаться с сервером.';
+                    JurBotUi.logError('POST /v1/auth/register: сеть', error);
+                    JurBotUi.clearHint(messageEl);
                 }
             });
         })();
