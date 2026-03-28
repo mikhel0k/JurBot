@@ -249,12 +249,17 @@ body.cabinet-page {
     font-weight: 600;
 }
 
-/* Три колонки */
+/* Документы и сотрудники — две колонки пополам */
 .cabinet-columns {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
     align-items: stretch;
+}
+
+.cabinet-columns > .cabinet-column-card {
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 @media (max-width: 960px) {
@@ -327,12 +332,131 @@ body.cabinet-page {
     border: 1px solid var(--cabinet-border);
 }
 
-.cabinet-column-card .employee-card--fio-only {
+.cabinet-column-card .employee-card--profile {
     padding: 12px 16px;
+    display: flex;
+    align-items: center;
 }
 
-.cabinet-column-card .employee-card--fio-only .employee-card__name {
+.cabinet-column-card .employee-card__row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+.cabinet-column-card .employee-card__name {
+    flex: 1 1 auto;
+    min-width: 0;
     margin-bottom: 0;
+    font-weight: 600;
+    line-height: 1.35;
+    align-self: center;
+}
+
+.cabinet-column-card .employee-card__actions {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+@media (max-width: 520px) {
+    .cabinet-column-card .employee-card__row {
+        flex-wrap: wrap;
+    }
+
+    .cabinet-column-card .employee-card__actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+.cabinet-column-card .employee-card__btn {
+    padding: 8px 14px;
+    font-size: 13px;
+    text-decoration: none;
+    box-sizing: border-box;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* styles1.css задаёт .button { margin-top: 50px } для форм — в карточках сотрудника это ломает выравнивание */
+.cabinet-column-card .employee-card .button.employee-card__btn {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.cabinet-column-card .employee-card__btn--danger {
+    background: rgba(180, 60, 60, 0.35);
+    border: 1px solid rgba(255, 120, 120, 0.45);
+    color: #ffdede;
+}
+
+.cabinet-column-card .employee-card__btn--danger:hover {
+    background: rgba(200, 70, 70, 0.45);
+    color: #fff;
+}
+
+/* Модальное окно подтверждения удаления */
+.cabinet-modal[hidden] {
+    display: none !important;
+}
+
+.cabinet-modal:not([hidden]) {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.cabinet-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+}
+
+.cabinet-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    background: var(--cabinet-card);
+    border: 1px solid var(--cabinet-border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+    box-sizing: border-box;
+}
+
+.cabinet-modal__title {
+    margin: 0 0 12px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--cabinet-text);
+}
+
+.cabinet-modal__text {
+    margin: 0 0 20px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--cabinet-muted);
+}
+
+.cabinet-modal__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
 }
 
 .cabinet-empty--inline {

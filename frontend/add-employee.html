@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавьте нового сотрудника</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <link rel="stylesheet" href="styles1.css">
 </head>
 <body>
@@ -13,7 +14,7 @@
                 <a class="back-link" href="profile.html" aria-label="Назад">
                     <img src="images/Vector.svg" alt="" class="back-icon">
                 </a>
-                <h1 class="form-header-title">Добавьте нового сотрудника</h1>
+                <h1 class="form-header-title" id="employee-form-title">Добавьте нового сотрудника</h1>
             </header>
 
             <form class="form form--two-cols" id="add-employee-form">
@@ -43,19 +44,25 @@
                 </div>
                 <div class="form-group">
                     <label class="label" for="salary">Оклад (₽)</label>
-                    <input class="input" type="number" id="salary" name="salary" placeholder="50000" required min="0" step="0.01">
+                    <input class="input" type="text" id="salary" name="salary" placeholder="50000" required inputmode="decimal" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label class="label" for="status">Статус</label>
-                    <select class="input" id="status" name="status" required>
-                        <option value="active" selected>Активен</option>
-                        <option value="on_leave">В отпуске</option>
-                        <option value="probation">Испытательный срок</option>
-                    </select>
+                    <input
+                        class="input"
+                        type="text"
+                        id="status"
+                        name="status"
+                        value="Активен"
+                        placeholder="Например: Активен, в отпуске, испытательный срок"
+                        required
+                        maxlength="150"
+                        autocomplete="off"
+                    >
                 </div>
                 <div class="form-group">
                     <label class="label" for="hire_date">Дата приёма на работу</label>
-                    <input class="input" type="date" id="hire_date" name="hire_date" required>
+                    <input class="input input--date js-datepicker" type="text" id="hire_date" name="hire_date" placeholder="дд.мм.гггг" required autocomplete="off" inputmode="none">
                 </div>
                 <div class="form-group">
                     <label class="label" for="passport_series">Серия паспорта</label>
@@ -67,9 +74,9 @@
                 </div>
                 <div class="form-group">
                     <label class="label" for="passport_issued_date">Дата выдачи паспорта</label>
-                    <input class="input" type="date" id="passport_issued_date" name="passport_issued_date" required>
+                    <input class="input input--date js-datepicker" type="text" id="passport_issued_date" name="passport_issued_date" placeholder="дд.мм.гггг" required autocomplete="off" inputmode="none">
                 </div>
-                <div class="form-group form-group--full">
+                <div class="form-group">
                     <label class="label" for="passport_issued_place">Кем выдан паспорт</label>
                     <input class="input" type="text" id="passport_issued_place" name="passport_issued_place" placeholder="ОТДЕЛОМ УФМС …" required maxlength="255">
                 </div>
@@ -91,13 +98,15 @@
                 </div>
 
                 <div class="form-group form-group--full buttons-row buttons-row--single">
-                    <button class="button button--full" type="submit">Добавить сотрудника</button>
+                    <button class="button button--full" type="submit" id="employee-form-submit">Добавить сотрудника</button>
                 </div>
                 <p class="form-hint form-group--full" id="add-employee-message" aria-live="polite"></p>
             </form>
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/ru.js"></script>
     <script src="api-config.js"></script>
     <script>
         (function () {
@@ -115,11 +124,91 @@
                 return String(s).replace(/\D/g, '');
             }
 
+            function setFlatpickrDate(inputId, isoYmd) {
+                if (!isoYmd) return;
+                var el = document.getElementById(inputId);
+                if (!el) return;
+                var fp = el._flatpickr;
+                if (fp) {
+                    fp.setDate(isoYmd, false);
+                } else {
+                    el.value = String(isoYmd).slice(0, 10);
+                }
+            }
+
             var form = document.getElementById('add-employee-form');
             var messageEl = document.getElementById('add-employee-message');
             var base = window.API_BASE || 'http://localhost:8000';
+            var editId = (function () {
+                var id = new URLSearchParams(window.location.search).get('id');
+                return id && /^\d+$/.test(id) ? id : null;
+            })();
 
             if (!form) return;
+
+            if (typeof flatpickr !== 'undefined') {
+                var ruLocale = flatpickr.l10ns && flatpickr.l10ns.ru;
+                document.querySelectorAll('.js-datepicker').forEach(function (el) {
+                    flatpickr(el, {
+                        locale: ruLocale,
+                        dateFormat: 'Y-m-d',
+                        altInput: true,
+                        altFormat: 'd.m.Y',
+                        altInputClass: 'input input--date input--date-alt',
+                        allowInput: false,
+                        disableMobile: true,
+                        monthSelectorType: 'static',
+                    });
+                });
+            }
+
+            if (editId) {
+                document.getElementById('employee-form-title').textContent = 'Редактирование сотрудника';
+                document.getElementById('employee-form-submit').textContent = 'Сохранить';
+                (async function loadEmployee() {
+                    messageEl.textContent = '';
+                    try {
+                        var res = await fetch(base + '/v1/employee/' + encodeURIComponent(editId), {
+                            credentials: 'include',
+                        });
+                        if (res.status === 401) {
+                            messageEl.textContent = 'Нужна авторизация.';
+                            return;
+                        }
+                        if (!res.ok) {
+                            messageEl.textContent = 'Не удалось загрузить данные сотрудника.';
+                            return;
+                        }
+                        var e = await res.json();
+                        document.getElementById('last_name').value = e.last_name || '';
+                        document.getElementById('first_name').value = e.first_name || '';
+                        document.getElementById('middle_name').value =
+                            e.middle_name === '—' ? '' : (e.middle_name || '');
+                        document.getElementById('email').value = e.email || '';
+                        document.getElementById('phone_number').value = e.phone_number || '';
+                        document.getElementById('position').value = e.position || '';
+                        document.getElementById('salary').value =
+                            e.salary != null ? String(e.salary).replace(/\.00$/, '') : '';
+                        document.getElementById('status').value = e.status || '';
+                        document.getElementById('passport_series').value = e.passport_series || '';
+                        document.getElementById('passport_number').value = e.passport_number || '';
+                        document.getElementById('passport_issued_place').value =
+                            e.passport_issued_place || '';
+                        document.getElementById('passport_issued_code').value =
+                            e.passport_issued_code || '';
+                        document.getElementById('inn').value = e.inn || '';
+                        document.getElementById('snils').value = e.snils || '';
+                        document.getElementById('address').value = e.address || '';
+                        var hd = e.hire_date ? String(e.hire_date).slice(0, 10) : '';
+                        var pd = e.passport_issued_date ? String(e.passport_issued_date).slice(0, 10) : '';
+                        setFlatpickrDate('hire_date', hd);
+                        setFlatpickrDate('passport_issued_date', pd);
+                    } catch (err) {
+                        console.error(err);
+                        messageEl.textContent = 'Ошибка сети при загрузке.';
+                    }
+                })();
+            }
 
             form.addEventListener('submit', async function (event) {
                 event.preventDefault();
@@ -182,8 +271,12 @@
                 };
 
                 try {
-                    var response = await fetch(base + '/v1/employee/', {
-                        method: 'POST',
+                    var url = editId
+                        ? base + '/v1/employee/' + encodeURIComponent(editId)
+                        : base + '/v1/employee/';
+                    var method = editId ? 'PATCH' : 'POST';
+                    var response = await fetch(url, {
+                        method: method,
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
                         body: JSON.stringify(payload),
@@ -203,7 +296,7 @@
                         return;
                     }
 
-                    messageEl.textContent = 'Сотрудник добавлен.';
+                    messageEl.textContent = editId ? 'Изменения сохранены.' : 'Сотрудник добавлен.';
                     window.location.href = 'profile.html';
                 } catch (e) {
                     console.error(e);

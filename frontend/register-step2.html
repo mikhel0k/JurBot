@@ -111,6 +111,13 @@
 
                     if (!response.ok) {
                         const errorData = await response.json().catch(() => ({}));
+                        if (response.status === 401) {
+                            messageEl.textContent =
+                                'Сессия не найдена или истекла. Войдите снова через форму входа и откройте эту страницу по адресу ' +
+                                (window.API_BASE || 'http://localhost:8000') +
+                                '/ui/register-step2.html (не через file:// — иначе браузер не отправит куки).';
+                            return;
+                        }
                         const detail = Array.isArray(errorData.detail) ? errorData.detail.map(d => d.msg || d).join('. ') : (errorData.detail || '');
                         messageEl.textContent = detail || 'Ошибка при сохранении компании.';
                         return;

@@ -15,7 +15,7 @@
                 <span class="cabinet-nav__brand-text"><span class="cabinet-nav__brand-accent">ЮР</span>БОТ</span>
             </a>
             <nav class="cabinet-nav__actions" aria-label="Действия">
-                <a class="cabinet-chat-btn" href="main.html">Перейти в чат</a>
+                <a class="cabinet-chat-btn" href="chat.html">Перейти в чат</a>
                 <button type="button" class="cabinet-nav__icon-btn" title="Помощь" aria-label="Помощь">
                     <img src="img/question.svg" alt="">
                 </button>
@@ -58,11 +58,6 @@
         </section>
 
         <div class="cabinet-columns">
-            <section class="cabinet-column-card" aria-labelledby="col-history">
-                <h2 class="cabinet-column-card__title" id="col-history">История запросов</h2>
-                <div class="cabinet-column-card__body cabinet-column-card__body--empty" aria-hidden="true"></div>
-                <a href="#" class="cabinet-column-card__link">Посмотреть весь список</a>
-            </section>
             <section class="cabinet-column-card" aria-labelledby="col-docs">
                 <h2 class="cabinet-column-card__title" id="col-docs">Документы</h2>
                 <div class="cabinet-column-card__body cabinet-column-card__body--empty" aria-hidden="true"></div>
@@ -82,6 +77,24 @@
         <p class="cabinet-msg form-hint" id="profile-message" aria-live="polite"></p>
     </div>
 
+    <div class="cabinet-modal" id="delete-employee-modal" hidden role="presentation">
+        <div class="cabinet-modal__backdrop" data-modal-close tabindex="-1" aria-hidden="true"></div>
+        <div
+            class="cabinet-modal__dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-modal-title"
+            aria-describedby="delete-modal-desc"
+        >
+            <h3 class="cabinet-modal__title" id="delete-modal-title">Удалить сотрудника?</h3>
+            <p class="cabinet-modal__text" id="delete-modal-desc"></p>
+            <div class="cabinet-modal__actions">
+                <button type="button" class="button button--secondary" data-modal-close>Отмена</button>
+                <button type="button" class="button" id="delete-modal-confirm">Удалить</button>
+            </div>
+        </div>
+    </div>
+
     <script src="api-config.js"></script>
     <script>
         (function () {
@@ -92,6 +105,10 @@
             const emptyEl = document.getElementById('employee-empty');
             const msgEl = document.getElementById('profile-message');
             const statEmp = document.getElementById('stat-employees');
+            const deleteModal = document.getElementById('delete-employee-modal');
+            const deleteModalDesc = document.getElementById('delete-modal-desc');
+            const deleteModalConfirm = document.getElementById('delete-modal-confirm');
+            var pendingDeleteId = null;
 
             var savedEmail = sessionStorage.getItem('cabinet_user_email');
             if (savedEmail) {
@@ -124,12 +141,100 @@
                 items.forEach(function (emp) {
                     var fio = [emp.last_name, emp.first_name, emp.middle_name].filter(Boolean).join(' ');
                     var card = document.createElement('article');
-                    card.className = 'employee-card employee-card--fio-only';
+                    card.className = 'employee-card employee-card--profile';
                     card.innerHTML =
-                        '<div class="employee-card__name">' + esc(fio || '—') + '</div>';
+                        '<div class="employee-card__row">' +
+                        '<div class="employee-card__name">' +
+                        esc(fio || '—') +
+                        '</div>' +
+                        '<div class="employee-card__actions">' +
+                        '<a class="button button--small button--secondary employee-card__btn" href="add-employee.html?id=' +
+                        encodeURIComponent(String(emp.id)) +
+                        '">Редактировать</a>' +
+                        '<button type="button" class="button button--small employee-card__btn employee-card__btn--danger" data-delete-id="' +
+                        esc(String(emp.id)) +
+                        '">Удалить</button>' +
+                        '</div></div>';
                     listEl.appendChild(card);
                 });
             }
+
+            function openDeleteModal(id, name) {
+                pendingDeleteId = id;
+                deleteModalDesc.textContent =
+                    'Будет удалён: ' + name + '. Это действие нельзя отменить.';
+                deleteModal.hidden = false;
+                document.body.style.overflow = 'hidden';
+                deleteModalConfirm.focus();
+            }
+
+            function closeDeleteModal() {
+                pendingDeleteId = null;
+                deleteModal.hidden = true;
+                document.body.style.overflow = '';
+            }
+
+            listEl.addEventListener('click', function (ev) {
+                var btn = ev.target.closest('[data-delete-id]');
+                if (!btn) return;
+                var id = parseInt(btn.getAttribute('data-delete-id'), 10);
+                if (!id) return;
+                var card = btn.closest('.employee-card');
+                var nameEl = card && card.querySelector('.employee-card__name');
+                var name = (nameEl && nameEl.textContent.trim()) || 'Сотрудник';
+                openDeleteModal(id, name);
+            });
+
+            deleteModal.addEventListener('click', function (ev) {
+                if (ev.target.hasAttribute('data-modal-close')) {
+                    closeDeleteModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Escape' && !deleteModal.hidden) {
+                    closeDeleteModal();
+                }
+            });
+
+            deleteModalConfirm.addEventListener('click', async function () {
+                if (pendingDeleteId == null) return;
+                msgEl.textContent = '';
+                deleteModalConfirm.disabled = true;
+                try {
+                    var res = await fetch(base + '/v1/employee/', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify([pendingDeleteId]),
+                    });
+                    if (res.status === 401) {
+                        msgEl.textContent = 'Сессия истекла. Войдите снова.';
+                        closeDeleteModal();
+                        return;
+                    }
+                    if (!res.ok) {
+                        var err = await res.json().catch(function () { return {}; });
+                        msgEl.textContent =
+                            (typeof err.detail === 'string' ? err.detail : '') ||
+                            'Не удалось удалить сотрудника.';
+                        closeDeleteModal();
+                        return;
+                    }
+                    closeDeleteModal();
+                    var eRes = await fetch(base + '/v1/employee/', { credentials: 'include' });
+                    if (eRes.ok) {
+                        var employees = await eRes.json();
+                        renderEmployees(employees);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    msgEl.textContent = 'Ошибка сети при удалении.';
+                    closeDeleteModal();
+                } finally {
+                    deleteModalConfirm.disabled = false;
+                }
+            });
 
             document.getElementById('logout-btn').addEventListener('click', async function () {
                 msgEl.textContent = '';

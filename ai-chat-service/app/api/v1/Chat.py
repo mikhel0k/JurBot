@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from openai import OpenAI
+from openai import APIError, OpenAI, PermissionDeniedError
 from openai import AuthenticationError as OpenAIAuthError
 
 from app.core.config import settings
@@ -53,6 +53,20 @@ async def chat(
         )
     except OpenAIAuthError as e:
         raise HTTPException(status_code=503, detail="OpenAI API key invalid or missing") from e
+    except PermissionDeniedError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "OpenAI отклонил запрос: регион или страна не поддерживаются "
+                "(unsupported_country_region_territory). Попробуйте VPN в поддерживаемую страну "
+                "или другой API/модель."
+            ),
+        ) from e
+    except APIError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Ошибка провайдера ИИ: {getattr(e, 'message', None) or str(e)}",
+        ) from e
     response_text = completion.choices[0].message.content if completion.choices else ""
     try:
         await add_messages(

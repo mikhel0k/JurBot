@@ -98,7 +98,6 @@ services:
     environment:
       MONGO_URI: mongodb://mongo:27017
       MONGO_DB: ${MONGO_DB:-jurbot}
-      API_TOKEN: ${API_TOKEN:-}
     env_file:
       - ./backend/.env
     ports:
