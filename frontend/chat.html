@@ -330,6 +330,7 @@
 
                 appendMessageBubble('user', text);
                 inputEl.value = '';
+                autoResizeInput();
 
                 try {
                     var body = { message: text };
@@ -376,9 +377,21 @@
                 btnSend.disabled = !(inputEl.value || '').trim();
             }
 
+            function autoResizeInput() {
+                if (!inputEl) return;
+                var maxHeight = 200;
+                inputEl.style.height = 'auto';
+                var nextHeight = Math.min(inputEl.scrollHeight, maxHeight);
+                inputEl.style.height = nextHeight + 'px';
+                inputEl.style.overflowY = inputEl.scrollHeight > maxHeight ? 'auto' : 'hidden';
+            }
+
             btnNew.addEventListener('click', startNewChat);
             btnSend.addEventListener('click', sendMessage);
-            inputEl.addEventListener('input', syncSendState);
+            inputEl.addEventListener('input', function () {
+                syncSendState();
+                autoResizeInput();
+            });
             inputEl.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -403,12 +416,9 @@
                 var probe = await fetchJson(base + '/v1/company/', { credentials: 'include' });
                 if (!probe) return;
                 if (probe.status === 401) return;
-                if (probe.status === 404) {
-                    window.location.href = 'register-step2.html';
-                    return;
-                }
                 await loadConversations();
                 updateWelcomeVisibility();
+                autoResizeInput();
             })();
         })();
     </script>

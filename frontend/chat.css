@@ -129,7 +129,6 @@ body.chat-page {
     overflow-y: auto;
     flex: 1;
     min-height: 0;
-    max-height: 240px;
 }
 
 .chat-conversations li {
@@ -432,8 +431,11 @@ body.chat-page {
     font-family: inherit;
     font-size: 16px;
     line-height: 1.45;
-    resize: vertical;
+    resize: none;
+    overflow-y: hidden;
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(253, 199, 66, 0.55) var(--chat-surface);
 }
 
 .chat-composer-box__input:focus {
@@ -514,14 +516,25 @@ body.chat-page {
 }
 
 .chat-conversations::-webkit-scrollbar,
-.chat-messages::-webkit-scrollbar {
+.chat-messages::-webkit-scrollbar,
+.chat-composer-box__input::-webkit-scrollbar {
     width: 6px;
 }
 
 .chat-conversations::-webkit-scrollbar-thumb,
-.chat-messages::-webkit-scrollbar-thumb {
+.chat-messages::-webkit-scrollbar-thumb,
+.chat-composer-box__input::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.18);
     border-radius: 3px;
+}
+
+.chat-composer-box__input::-webkit-scrollbar-track {
+    background: var(--chat-surface);
+    border-radius: 3px;
+}
+
+.chat-composer-box__input::-webkit-scrollbar-thumb:hover {
+    background: rgba(253, 199, 66, 0.65);
 }
 
 @media (max-width: 900px) {

@@ -117,6 +117,23 @@
                 window.location.href = 'register-step2.html';
             }
 
+            async function resolveUnauthorized(response) {
+                if (!response || response.status !== 401) {
+                    return;
+                }
+                try {
+                    var data = await response.clone().json();
+                    var detail = (data && data.detail ? String(data.detail) : '').toLowerCase();
+                    if (detail.indexOf('do not have a company') !== -1) {
+                        redirectNoCompany();
+                        return;
+                    }
+                } catch (e) {
+                    // ignore parse errors and fallback to login redirect
+                }
+                redirectUnauthenticated();
+            }
+
             function esc(s) {
                 var d = document.createElement('div');
                 d.textContent = s;
@@ -265,7 +282,7 @@
 
                     var eRes = await fetch(base + '/v1/employee/', { credentials: 'include' });
                     if (eRes.status === 401) {
-                        redirectUnauthenticated();
+                        await resolveUnauthorized(eRes);
                         return;
                     }
                     if (!eRes.ok) {
