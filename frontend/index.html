@@ -11,29 +11,36 @@
         <section class="form-container">
             <h1 class="form-title">Войти в аккаунт</h1>
 
-            <form class="form" action="#" method="post">
-                <label class="label" for="phone">Введите номер телефона</label>
+            <form class="form" id="login-form">
+                <label class="label" for="email">Email</label>
                 <input
                     class="input"
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    placeholder="+7 (999) 123-45-67"
-                    autocomplete="tel"
-                    data-inputmask="'mask': '+7 (999) 999-99-99'"
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="user@example.com"
+                    autocomplete="email"
+                    required
                 >
 
                 <label class="label" for="password">Введите пароль</label>
-                <input
-                    class="input"
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Минимум 8 символов"
-                    autocomplete="current-password"
-                >
+                <div class="input-wrap">
+                    <input
+                        class="input input-with-icon"
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Минимум 8 символов"
+                        autocomplete="current-password"
+                        required
+                    >
+                    <button type="button" class="toggle-password" aria-label="Показать пароль">
+                        <img src="images/eye.svg" alt="" class="icon-eye">
+                    </button>
+                </div>
 
                 <button class="button" type="submit">Продолжить</button>
+                <p class="form-hint" id="login-message" aria-live="polite"></p>
             </form>
 
             <p class="register-text">
@@ -41,5 +48,77 @@
             </p>
         </section>
     </main>
+
+    <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
+    <script>
+        (function () {
+            const form = document.getElementById('login-form');
+            const messageEl = document.getElementById('login-message');
+
+            if (!form) {
+                return;
+            }
+
+            const passwordInput = document.getElementById('password');
+            const togglePasswordBtn = form.querySelector('.toggle-password');
+            if (togglePasswordBtn && passwordInput) {
+                togglePasswordBtn.addEventListener('click', () => {
+                    const isHidden = passwordInput.type === 'password';
+                    passwordInput.type = isHidden ? 'text' : 'password';
+                    togglePasswordBtn.setAttribute('aria-label', isHidden ? 'Скрыть пароль' : 'Показать пароль');
+                });
+            }
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                messageEl.textContent = '';
+
+                const formData = new FormData(form);
+                // API /v1/auth/login принимает только email и password
+                const payload = {
+                    email: (formData.get('email') || '').toString().trim(),
+                    password: (formData.get('password') || '').toString(),
+                };
+
+                if (!payload.email || !payload.password) {
+                    messageEl.textContent = 'Введите email и пароль.';
+                    return;
+                }
+
+                try {
+                    const response = await fetch((window.API_BASE || 'http://localhost:8000') + '/v1/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!response.ok) {
+                        await JurBotUi.logBadResponse('POST /v1/auth/login', response);
+                        messageEl.textContent =
+                            response.status === 401 ? 'Неверный email или пароль.' : '';
+                        return;
+                    }
+
+                    const data = await response.json().catch(() => ({}));
+                    if (data && data.jti) {
+                        sessionStorage.setItem('login_jti', data.jti);
+                        sessionStorage.setItem('cabinet_user_email', payload.email);
+                        messageEl.textContent = 'Код отправлен на email. Проверьте почту.';
+                        window.location.href = 'login-confirm.html';
+                    } else {
+                        JurBotUi.logError('POST /v1/auth/login: нет jti в ответе', data);
+                        JurBotUi.clearHint(messageEl);
+                    }
+                } catch (error) {
+                    JurBotUi.logError('POST /v1/auth/login: сеть', error);
+                    JurBotUi.clearHint(messageEl);
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

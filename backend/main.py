@@ -1,9 +1,12 @@
 """JurBot API — управление компаниями и сотрудниками."""
 import uvicorn
 from contextlib import asynccontextmanager
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -63,11 +66,29 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS: для фронта на другом origin задайте CORS_ORIGINS в .env (через запятую, например http://localhost:3000).
-_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+# CORS: CORS_ORIGINS в .env (через запятую). В development список объединяется с дефолтами (file:// = Origin "null").
+_default_origins = [
+    "null",  # страница открыта по file://
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
+_env_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+if settings.ENVIRONMENT == "development":
+    _origins = list(dict.fromkeys(_default_origins + _env_origins))
+else:
+    _origins = _env_origins or _default_origins
+_cors_origin_regex = r"^null$|^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
+logger.info("CORS allow_origins: %s, allow_origin_regex: %s", _origins, _cors_origin_regex)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
+    allow_origin_regex=_cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -75,6 +96,11 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(router)
+
+# UI: http://127.0.0.1:8000/ui/... — тот же origin, что и API. В Docker нужен volume ./frontend:/frontend
+_frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
+if _frontend_dir.is_dir():
+    app.mount("/ui", StaticFiles(directory=str(_frontend_dir), html=True), name="ui")
 
 
 @app.exception_handler(AppException)

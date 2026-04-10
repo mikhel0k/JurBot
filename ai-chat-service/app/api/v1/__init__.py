@@ -1,3 +1,2 @@
-from . import chat
-
+# Не импортируем chat здесь — иначе циклический импорт при загрузке app.api.router
 __all__ = ["chat"]

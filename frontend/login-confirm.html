@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Код подтверждения входа</title>
+    <link rel="stylesheet" href="styles1.css">
+</head>
+<body>
+    <main class="page">
+        <section class="form-container">
+            <header class="form-header">
+                <a class="back-link" href="index.html" aria-label="Назад">
+                    <img src="images/Vector.svg" alt="" class="back-icon">
+                </a>
+                <h1 class="form-header-title">Введите код из email</h1>
+            </header>
+
+            <form class="form" id="confirm-form">
+                <label class="label" for="code">Код из письма (6 цифр)</label>
+                <input
+                    class="input"
+                    type="text"
+                    id="code"
+                    name="code"
+                    placeholder="123456"
+                    inputmode="numeric"
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                    autocomplete="one-time-code"
+                    required
+                >
+
+                <button class="button" type="submit">Войти</button>
+                <p class="form-hint" id="confirm-message" aria-live="polite"></p>
+            </form>
+        </section>
+    </main>
+
+    <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
+    <script>
+        (function () {
+            const jti = sessionStorage.getItem('login_jti');
+            if (!jti) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const form = document.getElementById('confirm-form');
+            const messageEl = document.getElementById('confirm-message');
+
+            if (!form) return;
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                messageEl.textContent = '';
+
+                const code = (document.getElementById('code').value || '').toString().trim();
+                if (!code || code.length !== 6) {
+                    messageEl.textContent = 'Введите 6-значный код из письма.';
+                    return;
+                }
+
+                const payload = { jti, code };
+
+                try {
+                    const response = await fetch((window.API_BASE || 'http://localhost:8000') + '/v1/auth/login/confirm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!response.ok) {
+                        await JurBotUi.logBadResponse('POST /v1/auth/login/confirm', response);
+                        messageEl.textContent = 'Код неверный или устарел. Запросите вход снова.';
+                        return;
+                    }
+
+                    const data = await response.json().catch(() => ({}));
+                    sessionStorage.removeItem('login_jti');
+
+                    if (data && data.status === 'success') {
+                        messageEl.textContent = 'Вход выполнен.';
+                        window.location.href = 'profile.html';
+                    } else if (data && data.status && data.status.includes('company')) {
+                        messageEl.textContent = 'Вход выполнен. У вас ещё нет компании — можно создать.';
+                        window.location.href = 'register-step2.html';
+                    } else {
+                        window.location.href = 'profile.html';
+                    }
+                } catch (error) {
+                    JurBotUi.logError('POST /v1/auth/login/confirm: сеть', error);
+                    JurBotUi.clearHint(messageEl);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

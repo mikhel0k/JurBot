@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат — ЮрБот</title>
+    <link rel="stylesheet" href="styles1.css">
+    <link rel="stylesheet" href="chat.css">
+</head>
+<body class="chat-page">
+    <div class="chat-shell" id="chat-shell">
+        <aside class="chat-sidebar" aria-label="Меню чата">
+            <div class="chat-sidebar__top">
+                <img class="chat-sidebar__logo" src="img/logo.svg" alt="ЮрБот" width="36" height="36">
+                <button type="button" class="chat-sidebar__collapse" id="btn-sidebar-collapse" aria-label="Свернуть панель" title="Свернуть">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <button type="button" class="chat-new-btn" id="btn-new-chat">Новый чат</button>
+            <div class="chat-history-label">История запросов:</div>
+            <ul class="chat-conversations" id="conversation-list"></ul>
+        </aside>
+
+        <div class="chat-main-wrap">
+            <button type="button" class="chat-expand-sidebar" id="btn-sidebar-expand" aria-label="Открыть панель" title="Панель">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+
+            <header class="chat-topbar">
+                <a class="chat-topbar__brand" href="profile.html"><span>Ю</span>РБОТ</a>
+                <a class="chat-topbar__profile" href="profile.html" aria-label="Личный кабинет" title="Профиль">
+                    <img src="img/profile.svg" alt="">
+                </a>
+            </header>
+
+            <p class="chat-banner" id="chat-banner" role="alert" hidden></p>
+
+            <div class="chat-main-stage">
+                <div class="chat-welcome" id="chat-welcome" aria-hidden="true">
+                    <p class="chat-welcome__text">
+                        Добрый день! Меня зовут <span class="chat-welcome__accent">Юра</span>. Чем я могу помочь?
+                    </p>
+                </div>
+                <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+            </div>
+
+            <div class="chat-composer-wrap">
+                <div class="chat-composer-box">
+                    <label class="visually-hidden" for="chat-input">Ваш вопрос</label>
+                    <textarea
+                        id="chat-input"
+                        class="chat-composer-box__input"
+                        rows="2"
+                        placeholder="Какой вопрос вы хотите задать?"
+                        maxlength="8000"
+                    ></textarea>
+                    <div class="chat-composer-box__footer">
+                        <div class="chat-composer-box__tools">
+                            <button type="button" class="chat-tool-btn" aria-label="Вложение" disabled title="Скоро">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                                </svg>
+                            </button>
+                            <button type="button" class="chat-tool-btn" aria-label="Голосовой ввод" disabled title="Скоро">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <button type="button" class="chat-send-fab" id="btn-send" disabled aria-label="Отправить">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <line x1="12" y1="19" x2="12" y2="5"></line>
+                                <polyline points="5 12 12 5 19 12"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
+    <script>
+        (function () {
+            var base = window.API_BASE || 'http://localhost:8000';
+            var PAGE_SIZE = 40;
+
+            var shellEl = document.getElementById('chat-shell');
+            var banner = document.getElementById('chat-banner');
+            var listEl = document.getElementById('conversation-list');
+            var messagesEl = document.getElementById('chat-messages');
+            var welcomeEl = document.getElementById('chat-welcome');
+            var inputEl = document.getElementById('chat-input');
+            var btnSend = document.getElementById('btn-send');
+            var btnNew = document.getElementById('btn-new-chat');
+            var btnCollapse = document.getElementById('btn-sidebar-collapse');
+            var btnExpand = document.getElementById('btn-sidebar-expand');
+
+            var currentChatId = null;
+            var pendingNewChat = false;
+            var oldestLoadedPage = null;
+            var historyTotal = 0;
+            var loadOlderBtn = null;
+
+            var chevronRightSvg =
+                '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<polyline points="9 18 15 12 9 6"></polyline>' +
+                '</svg>';
+
+            function showBanner(text) {
+                banner.textContent = text || '';
+                banner.hidden = !text;
+            }
+
+            function esc(s) {
+                var d = document.createElement('div');
+                d.textContent = s == null ? '' : String(s);
+                return d.innerHTML;
+            }
+
+            function formatDateOnly(iso) {
+                if (!iso) return '';
+                try {
+                    var d = new Date(iso);
+                    if (isNaN(d.getTime())) return '';
+                    return d.toLocaleDateString('ru-RU');
+                } catch (e) {
+                    return '';
+                }
+            }
+
+            function updateWelcomeVisibility() {
+                var hasMsgs = messagesEl.querySelector('.chat-msg');
+                welcomeEl.classList.toggle('is-hidden', !!hasMsgs);
+                welcomeEl.setAttribute('aria-hidden', hasMsgs ? 'true' : 'false');
+            }
+
+            function clearMessagesDom() {
+                messagesEl.innerHTML = '';
+                if (loadOlderBtn && loadOlderBtn.parentNode) {
+                    loadOlderBtn.parentNode.removeChild(loadOlderBtn);
+                }
+                loadOlderBtn = null;
+            }
+
+            function appendMessageBubble(role, content) {
+                messagesEl.appendChild(makeBubbleEl(role, content));
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+                updateWelcomeVisibility();
+            }
+
+            function makeBubbleEl(role, content) {
+                var div = document.createElement('div');
+                div.className = 'chat-msg chat-msg--' + (role === 'user' ? 'user' : 'assistant');
+                var label = role === 'user' ? 'Вы' : 'ЮрБот';
+                div.innerHTML =
+                    '<div class="chat-msg__role">' + esc(label) + '</div>' +
+                    '<div class="chat-msg__text">' + esc(content) + '</div>';
+                return div;
+            }
+
+            function ensureLoadOlderButton() {
+                if (oldestLoadedPage == null || oldestLoadedPage <= 1) return;
+                if (loadOlderBtn) return;
+                loadOlderBtn = document.createElement('button');
+                loadOlderBtn.type = 'button';
+                loadOlderBtn.className = 'chat-load-older';
+                loadOlderBtn.textContent = 'Загрузить ранние сообщения';
+                loadOlderBtn.addEventListener('click', onLoadOlder);
+                messagesEl.insertBefore(loadOlderBtn, messagesEl.firstChild);
+            }
+
+            async function fetchJson(url, options) {
+                var res = await fetch(url, options || {});
+                if (res.status === 401) {
+                    window.location.href = 'index.html';
+                    return null;
+                }
+                return res;
+            }
+
+            async function loadConversations() {
+                showBanner('');
+                var res = await fetchJson(base + '/v1/chat/conversations?page=1&page_size=50', {
+                    credentials: 'include',
+                });
+                if (!res || !res.ok) {
+                    if (res) {
+                        await JurBotUi.logBadResponse('GET /v1/chat/conversations', res);
+                    } else {
+                        JurBotUi.logError('GET /v1/chat/conversations', 'нет ответа');
+                    }
+                    showBanner('');
+                    return;
+                }
+                var data = await res.json();
+                listEl.innerHTML = '';
+                var items = data.items || [];
+                items.forEach(function (c) {
+                    var li = document.createElement('li');
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'chat-conv-item';
+                    btn.dataset.chatId = c.chat_id;
+                    var dateOnly = formatDateOnly(c.updated_at || c.created_at);
+                    var subParts = [];
+                    if (dateOnly) subParts.push('от ' + esc(dateOnly));
+                    if (c.message_count != null) subParts.push(esc(String(c.message_count)) + ' сообщ.');
+                    var sub = subParts.join(' · ');
+                    btn.innerHTML =
+                        '<span class="chat-conv-item__body">' +
+                        '<span class="chat-conv-item__title">Диалог</span>' +
+                        '<span class="chat-conv-item__sub">' +
+                        sub +
+                        '</span></span>' +
+                        '<span class="chat-conv-item__chevron">' +
+                        chevronRightSvg +
+                        '</span>';
+                    btn.addEventListener('click', function () {
+                        selectConversation(c.chat_id);
+                    });
+                    li.appendChild(btn);
+                    listEl.appendChild(li);
+                });
+                highlightActiveInList();
+            }
+
+            function highlightActiveInList() {
+                listEl.querySelectorAll('.chat-conv-item').forEach(function (b) {
+                    b.classList.toggle('is-active', b.dataset.chatId === currentChatId);
+                });
+            }
+
+            async function loadHistoryPage(chatId, page) {
+                var url =
+                    base +
+                    '/v1/chat/history?' +
+                    new URLSearchParams({
+                        chat_id: chatId,
+                        page: String(page),
+                        page_size: String(PAGE_SIZE),
+                    }).toString();
+                var res = await fetchJson(url, { credentials: 'include' });
+                if (!res || !res.ok) return null;
+                return res.json();
+            }
+
+            async function selectConversation(chatId) {
+                pendingNewChat = false;
+                currentChatId = chatId;
+                highlightActiveInList();
+                clearMessagesDom();
+                showBanner('');
+
+                var first = await loadHistoryPage(chatId, 1);
+                if (!first) return;
+                historyTotal = first.total || 0;
+                if (historyTotal === 0) {
+                    oldestLoadedPage = 1;
+                    updateWelcomeVisibility();
+                    return;
+                }
+
+                var lastPage = Math.max(1, Math.ceil(historyTotal / PAGE_SIZE));
+                var data = first;
+                if (lastPage > 1) {
+                    data = await loadHistoryPage(chatId, lastPage);
+                }
+                if (!data || !data.items) return;
+
+                oldestLoadedPage = lastPage;
+                data.items.forEach(function (m) {
+                    messagesEl.appendChild(makeBubbleEl(m.role, m.content));
+                });
+                ensureLoadOlderButton();
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+                updateWelcomeVisibility();
+            }
+
+            async function onLoadOlder() {
+                if (!currentChatId || oldestLoadedPage == null || oldestLoadedPage <= 1) return;
+                if (loadOlderBtn) loadOlderBtn.disabled = true;
+                var page = oldestLoadedPage - 1;
+                var data = await loadHistoryPage(currentChatId, page);
+                if (loadOlderBtn) loadOlderBtn.disabled = false;
+                if (!data || !data.items || data.items.length === 0) return;
+                var prevScroll = messagesEl.scrollHeight;
+                var frag = document.createDocumentFragment();
+                data.items.forEach(function (m) {
+                    frag.appendChild(makeBubbleEl(m.role, m.content));
+                });
+                var insertBefore =
+                    loadOlderBtn && loadOlderBtn.parentNode === messagesEl
+                        ? loadOlderBtn.nextSibling
+                        : messagesEl.firstChild;
+                messagesEl.insertBefore(frag, insertBefore);
+                oldestLoadedPage = page;
+                messagesEl.scrollTop = messagesEl.scrollHeight - prevScroll;
+                if (oldestLoadedPage <= 1 && loadOlderBtn) {
+                    loadOlderBtn.remove();
+                    loadOlderBtn = null;
+                }
+                updateWelcomeVisibility();
+            }
+
+            function startNewChat() {
+                pendingNewChat = true;
+                currentChatId = null;
+                highlightActiveInList();
+                clearMessagesDom();
+                showBanner('');
+                updateWelcomeVisibility();
+                inputEl.focus();
+            }
+
+            async function sendMessage() {
+                var text = (inputEl.value || '').trim();
+                if (!text) return;
+
+                btnSend.disabled = true;
+                showBanner('');
+
+                appendMessageBubble('user', text);
+                inputEl.value = '';
+                autoResizeInput();
+
+                try {
+                    var body = { message: text };
+                    if (currentChatId && !pendingNewChat) {
+                        body.chat_id = currentChatId;
+                    }
+
+                    var res = await fetchJson(base + '/v1/chat', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                    });
+                    if (!res) return;
+
+                    if (!res.ok) {
+                        var errText = await res.text();
+                        JurBotUi.logError('POST /v1/chat', { status: res.status, body: errText });
+                        showBanner('');
+                        return;
+                    }
+
+                    var data = await res.json();
+                    var newId = data.chat_id;
+                    if (newId) {
+                        currentChatId = newId;
+                        pendingNewChat = false;
+                    }
+                    if (data.response != null) {
+                        appendMessageBubble('assistant', data.response);
+                    }
+                    await loadConversations();
+                    highlightActiveInList();
+                } catch (e) {
+                    JurBotUi.logError('POST /v1/chat: сеть', e);
+                    showBanner('');
+                } finally {
+                    btnSend.disabled = false;
+                    syncSendState();
+                }
+            }
+
+            function syncSendState() {
+                btnSend.disabled = !(inputEl.value || '').trim();
+            }
+
+            function autoResizeInput() {
+                if (!inputEl) return;
+                var maxHeight = 200;
+                inputEl.style.height = 'auto';
+                var nextHeight = Math.min(inputEl.scrollHeight, maxHeight);
+                inputEl.style.height = nextHeight + 'px';
+                inputEl.style.overflowY = inputEl.scrollHeight > maxHeight ? 'auto' : 'hidden';
+            }
+
+            btnNew.addEventListener('click', startNewChat);
+            btnSend.addEventListener('click', sendMessage);
+            inputEl.addEventListener('input', function () {
+                syncSendState();
+                autoResizeInput();
+            });
+            inputEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if ((inputEl.value || '').trim()) {
+                        sendMessage();
+                    }
+                }
+            });
+
+            if (btnCollapse && shellEl) {
+                btnCollapse.addEventListener('click', function () {
+                    shellEl.classList.add('chat-shell--sidebar-collapsed');
+                });
+            }
+            if (btnExpand && shellEl) {
+                btnExpand.addEventListener('click', function () {
+                    shellEl.classList.remove('chat-shell--sidebar-collapsed');
+                });
+            }
+
+            (async function init() {
+                var probe = await fetchJson(base + '/v1/company/', { credentials: 'include' });
+                if (!probe) return;
+                if (probe.status === 401) return;
+                await loadConversations();
+                updateWelcomeVisibility();
+                autoResizeInput();
+            })();
+        })();
+    </script>
+</body>
+</html>

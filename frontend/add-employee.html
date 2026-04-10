@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавьте нового сотрудника</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="styles1.css">
+</head>
+<body>
+    <main class="page page--wide">
+        <section class="form-container">
+            <header class="form-header">
+                <a class="back-link" href="profile.html" aria-label="Назад">
+                    <img src="images/Vector.svg" alt="" class="back-icon">
+                </a>
+                <h1 class="form-header-title" id="employee-form-title">Добавьте нового сотрудника</h1>
+            </header>
+
+            <form class="form form--two-cols" id="add-employee-form">
+                <div class="form-group">
+                    <label class="label" for="last_name">Фамилия</label>
+                    <input class="input" type="text" id="last_name" name="last_name" placeholder="Иванов" required maxlength="150" autocomplete="family-name">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="first_name">Имя</label>
+                    <input class="input" type="text" id="first_name" name="first_name" placeholder="Иван" required maxlength="150" autocomplete="given-name">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="middle_name">Отчество</label>
+                    <input class="input" type="text" id="middle_name" name="middle_name" placeholder="Иванович" maxlength="150" autocomplete="additional-name">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="email">E-mail</label>
+                    <input class="input" type="email" id="email" name="email" placeholder="ivanov@company.ru" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="phone_number">Номер телефона</label>
+                    <input class="input" type="tel" id="phone_number" name="phone_number" placeholder="+79991234567" required autocomplete="tel">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="position">Должность</label>
+                    <input class="input" type="text" id="position" name="position" placeholder="Бухгалтер" required maxlength="150">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="salary">Оклад (₽)</label>
+                    <input class="input" type="text" id="salary" name="salary" placeholder="50000" required inputmode="decimal" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="status">Статус</label>
+                    <input
+                        class="input"
+                        type="text"
+                        id="status"
+                        name="status"
+                        value="Активен"
+                        placeholder="Например: Активен, в отпуске, испытательный срок"
+                        required
+                        maxlength="150"
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="form-group">
+                    <label class="label" for="hire_date">Дата приёма на работу</label>
+                    <input class="input input--date js-datepicker" type="text" id="hire_date" name="hire_date" placeholder="дд.мм.гггг" required autocomplete="off" inputmode="none">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="passport_series">Серия паспорта</label>
+                    <input class="input" type="text" id="passport_series" name="passport_series" placeholder="1234" required maxlength="4" inputmode="numeric" pattern="[0-9]{4}">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="passport_number">Номер паспорта</label>
+                    <input class="input" type="text" id="passport_number" name="passport_number" placeholder="567890" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="passport_issued_date">Дата выдачи паспорта</label>
+                    <input class="input input--date js-datepicker" type="text" id="passport_issued_date" name="passport_issued_date" placeholder="дд.мм.гггг" required autocomplete="off" inputmode="none">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="passport_issued_place">Кем выдан паспорт</label>
+                    <input class="input" type="text" id="passport_issued_place" name="passport_issued_place" placeholder="ОТДЕЛОМ УФМС …" required maxlength="255">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="passport_issued_code">Код подразделения</label>
+                    <input class="input" type="text" id="passport_issued_code" name="passport_issued_code" placeholder="123-456" required maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="inn">ИНН</label>
+                    <input class="input" type="text" id="inn" name="inn" placeholder="10 или 12 цифр" required minlength="10" maxlength="12" inputmode="numeric">
+                </div>
+                <div class="form-group">
+                    <label class="label" for="snils">СНИЛС</label>
+                    <input class="input" type="text" id="snils" name="snils" placeholder="12345678901" required maxlength="11" minlength="11" inputmode="numeric" pattern="[0-9]{11}">
+                </div>
+                <div class="form-group form-group--full">
+                    <label class="label" for="address">Адрес регистрации</label>
+                    <input class="input" type="text" id="address" name="address" placeholder="г. Москва, ул. …" required maxlength="255">
+                </div>
+
+                <div class="form-group form-group--full buttons-row buttons-row--single">
+                    <button class="button button--full" type="submit" id="employee-form-submit">Добавить сотрудника</button>
+                </div>
+                <p class="form-hint form-group--full" id="add-employee-message" aria-live="polite"></p>
+            </form>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/ru.js"></script>
+    <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
+    <script>
+        (function () {
+            function normalizePhoneForApi(raw) {
+                var s = String(raw).trim().replace(/[\s()-]/g, '');
+                if (!s) return '';
+                if (/^\+7\d{10}$/.test(s)) return s;
+                if (/^8\d{10}$/.test(s)) return '+7' + s.slice(1);
+                if (/^7\d{10}$/.test(s)) return '+' + s;
+                if (/^\d{10}$/.test(s)) return '+7' + s;
+                return s;
+            }
+
+            function digitsOnly(s) {
+                return String(s).replace(/\D/g, '');
+            }
+
+            function setFlatpickrDate(inputId, isoYmd) {
+                if (!isoYmd) return;
+                var el = document.getElementById(inputId);
+                if (!el) return;
+                var fp = el._flatpickr;
+                if (fp) {
+                    fp.setDate(isoYmd, false);
+                } else {
+                    el.value = String(isoYmd).slice(0, 10);
+                }
+            }
+
+            var form = document.getElementById('add-employee-form');
+            var messageEl = document.getElementById('add-employee-message');
+            var base = window.API_BASE || 'http://localhost:8000';
+            var editId = (function () {
+                var id = new URLSearchParams(window.location.search).get('id');
+                return id && /^\d+$/.test(id) ? id : null;
+            })();
+
+            if (!form) return;
+
+            if (typeof flatpickr !== 'undefined') {
+                var ruLocale = flatpickr.l10ns && flatpickr.l10ns.ru;
+                document.querySelectorAll('.js-datepicker').forEach(function (el) {
+                    flatpickr(el, {
+                        locale: ruLocale,
+                        dateFormat: 'Y-m-d',
+                        altInput: true,
+                        altFormat: 'd.m.Y',
+                        altInputClass: 'input input--date input--date-alt',
+                        allowInput: false,
+                        disableMobile: true,
+                        monthSelectorType: 'static',
+                    });
+                });
+            }
+
+            if (editId) {
+                document.getElementById('employee-form-title').textContent = 'Редактирование сотрудника';
+                document.getElementById('employee-form-submit').textContent = 'Сохранить';
+                (async function loadEmployee() {
+                    messageEl.textContent = '';
+                    try {
+                        var res = await fetch(base + '/v1/employee/' + encodeURIComponent(editId), {
+                            credentials: 'include',
+                        });
+                        if (res.status === 401) {
+                            messageEl.textContent = 'Нужна авторизация.';
+                            return;
+                        }
+                        if (!res.ok) {
+                            await JurBotUi.logBadResponse('GET /v1/employee/' + editId, res);
+                            JurBotUi.clearHint(messageEl);
+                            return;
+                        }
+                        var e = await res.json();
+                        document.getElementById('last_name').value = e.last_name || '';
+                        document.getElementById('first_name').value = e.first_name || '';
+                        document.getElementById('middle_name').value =
+                            e.middle_name === '—' ? '' : (e.middle_name || '');
+                        document.getElementById('email').value = e.email || '';
+                        document.getElementById('phone_number').value = e.phone_number || '';
+                        document.getElementById('position').value = e.position || '';
+                        document.getElementById('salary').value =
+                            e.salary != null ? String(e.salary).replace(/\.00$/, '') : '';
+                        document.getElementById('status').value = e.status || '';
+                        document.getElementById('passport_series').value = e.passport_series || '';
+                        document.getElementById('passport_number').value = e.passport_number || '';
+                        document.getElementById('passport_issued_place').value =
+                            e.passport_issued_place || '';
+                        document.getElementById('passport_issued_code').value =
+                            e.passport_issued_code || '';
+                        document.getElementById('inn').value = e.inn || '';
+                        document.getElementById('snils').value = e.snils || '';
+                        document.getElementById('address').value = e.address || '';
+                        var hd = e.hire_date ? String(e.hire_date).slice(0, 10) : '';
+                        var pd = e.passport_issued_date ? String(e.passport_issued_date).slice(0, 10) : '';
+                        setFlatpickrDate('hire_date', hd);
+                        setFlatpickrDate('passport_issued_date', pd);
+                    } catch (err) {
+                        JurBotUi.logError('GET /v1/employee/: сеть', err);
+                        JurBotUi.clearHint(messageEl);
+                    }
+                })();
+            }
+
+            form.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                messageEl.textContent = '';
+
+                var fd = new FormData(form);
+                var phone = normalizePhoneForApi(fd.get('phone_number') || '');
+                if (!/^\+7\d{10}$/.test(phone)) {
+                    messageEl.textContent = 'Телефон: +7 и 10 цифр или 11 цифр, начинающихся с 8.';
+                    return;
+                }
+
+                var inn = digitsOnly(fd.get('inn') || '');
+                if (inn.length !== 10 && inn.length !== 12) {
+                    messageEl.textContent = 'ИНН должен содержать 10 или 12 цифр.';
+                    return;
+                }
+
+                var snils = digitsOnly(fd.get('snils') || '');
+                if (snils.length !== 11) {
+                    messageEl.textContent = 'СНИЛС — 11 цифр.';
+                    return;
+                }
+
+                var middle = (fd.get('middle_name') || '').toString().trim();
+                if (!middle) middle = '—';
+
+                var salaryRaw = fd.get('salary');
+                var salaryNum = parseFloat(String(salaryRaw).replace(',', '.'));
+                if (isNaN(salaryNum) || salaryNum < 0) {
+                    messageEl.textContent = 'Укажите корректный оклад.';
+                    return;
+                }
+
+                var ps = digitsOnly(fd.get('passport_series') || '');
+                var pn = digitsOnly(fd.get('passport_number') || '');
+                if (ps.length !== 4 || pn.length !== 6) {
+                    messageEl.textContent = 'Серия паспорта — 4 цифры, номер — 6 цифр.';
+                    return;
+                }
+
+                var payload = {
+                    last_name: (fd.get('last_name') || '').toString().trim(),
+                    first_name: (fd.get('first_name') || '').toString().trim(),
+                    middle_name: middle,
+                    email: (fd.get('email') || '').toString().trim(),
+                    phone_number: phone,
+                    position: (fd.get('position') || '').toString().trim(),
+                    salary: salaryNum,
+                    status: (fd.get('status') || '').toString().trim(),
+                    hire_date: (fd.get('hire_date') || '').toString(),
+                    passport_series: ps,
+                    passport_number: pn,
+                    passport_issued_date: (fd.get('passport_issued_date') || '').toString(),
+                    passport_issued_place: (fd.get('passport_issued_place') || '').toString().trim(),
+                    passport_issued_code: (fd.get('passport_issued_code') || '').toString().trim(),
+                    inn: inn,
+                    snils: snils,
+                    address: (fd.get('address') || '').toString().trim(),
+                };
+
+                try {
+                    var url = editId
+                        ? base + '/v1/employee/' + encodeURIComponent(editId)
+                        : base + '/v1/employee/';
+                    var method = editId ? 'PATCH' : 'POST';
+                    var response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (response.status === 401) {
+                        messageEl.textContent = 'Нужна авторизация и компания. Войдите снова.';
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        await JurBotUi.logBadResponse(
+                            (editId ? 'PATCH' : 'POST') + ' /v1/employee/',
+                            response
+                        );
+                        JurBotUi.clearHint(messageEl);
+                        return;
+                    }
+
+                    messageEl.textContent = editId ? 'Изменения сохранены.' : 'Сотрудник добавлен.';
+                    window.location.href = 'profile.html';
+                } catch (e) {
+                    JurBotUi.logError('сохранение сотрудника: сеть', e);
+                    JurBotUi.clearHint(messageEl);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

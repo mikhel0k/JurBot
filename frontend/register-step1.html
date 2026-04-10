@@ -16,15 +16,27 @@
                 <h1 class="form-header-title">Шаг 1: введите свои данные</h1>
             </header>
 
-            <form class="form" action="register-step2.html" method="get">
+            <form class="form" id="register-form">
+                <label class="label" for="email">Email</label>
+                <input
+                    class="input"
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="user@example.com"
+                    autocomplete="email"
+                    required
+                >
+
                 <label class="label" for="phone">Номер телефона</label>
                 <input
                     class="input"
                     type="tel"
                     id="phone"
                     name="phone"
-                    ="+7 (__) ___ -__-__"
+                    placeholder="+7 (__) ___-__-__"
                     autocomplete="tel"
+                    required
                 >
 
                 <label class="label" for="fio">ФИО</label>
@@ -35,6 +47,7 @@
                     name="fio"
                     placeholder="Иванов Иван Иванович"
                     autocomplete="name"
+                    required
                 >
 
                 <label class="label" for="password">Придумайте пароль</label>
@@ -46,18 +59,103 @@
                         name="password"
                         placeholder="Минимум 8 символов"
                         autocomplete="new-password"
+                        required
                     >
                     <button type="button" class="toggle-password" aria-label="Показать пароль">
                         <img src="images/eye.svg" alt="" class="icon-eye">
                     </button>
                 </div>
-                <p class="form-hint">* Минимум 8 символов, хотя бы одна буква и цифра.</p>
+                <p class="form-hint">* Телефон: +7 и 10 цифр (например +79509921704) или 11 цифр с 8. Пароль: минимум 8 символов, буква и цифра.</p>
 
                 <div class="button-wrap">
                     <button class="button" type="submit">Продолжить</button>
                 </div>
+                <p class="form-hint" id="register-message" aria-live="polite"></p>
             </form>
         </section>
     </main>
+
+    <script src="api-config.js"></script>
+    <script src="ui-messages.js"></script>
+    <script>
+        (function () {
+            function normalizePhoneForApi(raw) {
+                var s = String(raw).trim().replace(/[\s()-]/g, '');
+                if (!s) return '';
+                if (/^\+7\d{10}$/.test(s)) return s;
+                if (/^8\d{10}$/.test(s)) return '+7' + s.slice(1);
+                if (/^7\d{10}$/.test(s)) return '+' + s;
+                if (/^\d{10}$/.test(s)) return '+7' + s;
+                return s;
+            }
+
+            const form = document.getElementById('register-form');
+            const messageEl = document.getElementById('register-message');
+
+            if (!form) {
+                return;
+            }
+
+            const passwordInput = document.getElementById('password');
+            const togglePasswordBtn = document.querySelector('.toggle-password');
+
+            if (togglePasswordBtn && passwordInput) {
+                togglePasswordBtn.addEventListener('click', () => {
+                    const isHidden = passwordInput.type === 'password';
+                    passwordInput.type = isHidden ? 'text' : 'password';
+                    togglePasswordBtn.setAttribute('aria-label', isHidden ? 'Скрыть пароль' : 'Показать пароль');
+                });
+            }
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                messageEl.textContent = '';
+
+                const formData = new FormData(form);
+                const payload = {
+                    email: (formData.get('email') || '').toString().trim(),
+                    full_name: (formData.get('fio') || '').toString().trim(),
+                    password: (formData.get('password') || '').toString(),
+                    phone_number: normalizePhoneForApi((formData.get('phone') || '').toString()),
+                };
+
+                if (!payload.email || !payload.phone_number || !payload.full_name || !payload.password) {
+                    messageEl.textContent = 'Заполните все поля формы.';
+                    return;
+                }
+
+                try {
+                    const response = await fetch((window.API_BASE || 'http://localhost:8000') + '/v1/auth/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'omit',
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!response.ok) {
+                        await JurBotUi.logBadResponse('POST /v1/auth/register', response);
+                        JurBotUi.clearHint(messageEl);
+                        return;
+                    }
+
+                    const data = await response.json().catch(() => ({}));
+                    if (data && data.jti) {
+                        sessionStorage.setItem('register_jti', data.jti);
+                        sessionStorage.setItem('cabinet_user_email', payload.email);
+                        messageEl.textContent = 'Код для подтверждения регистрации отправлен на email.';
+                        window.location.href = 'register-confirm.html';
+                    } else {
+                        JurBotUi.logError('POST /v1/auth/register: нет jti в ответе', data);
+                        JurBotUi.clearHint(messageEl);
+                    }
+                } catch (error) {
+                    JurBotUi.logError('POST /v1/auth/register: сеть', error);
+                    JurBotUi.clearHint(messageEl);
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
